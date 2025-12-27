@@ -24,7 +24,7 @@ Thumbs.db
 
 # Test screenshots
 *.png
-!client/public/*.png
+!frontend/public/*.png
 
 # Playwright
 playwright-report/

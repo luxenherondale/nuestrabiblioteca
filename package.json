@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Aplicación de gestión de biblioteca personal",
   "scripts": {
-    "dev:client": "cd client && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
     "dev:server": "cd server && npm run dev",
-    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "install:all": "npm install && cd frontend && npm install && cd ../server && npm install",
     "start:server": "cd server && npm start"
   },
   "keywords": [
