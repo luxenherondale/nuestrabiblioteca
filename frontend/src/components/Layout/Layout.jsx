@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, BarChart3, Home, Menu, X } from 'lucide-react';
+import { BookOpen, BarChart3, Home, Menu, X, User, LogOut, Key } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 import './Layout.css';
 
 const SidebarLogo = ({ showText = true }) => (
@@ -43,7 +44,12 @@ const SidebarNav = ({ navItems, isActive, sidebarOpen, onNavigate }) => (
 
 const Layout = ({ children }) => {
   const location = useLocation();
+  const { user, logout, changePassword } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
   const isActive = (path) => location.pathname === path;
 
@@ -59,12 +65,75 @@ const Layout = ({ children }) => {
     }
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+    
+    if (passwordForm.new !== passwordForm.confirm) {
+      setPasswordError('Las contraseñas no coinciden');
+      return;
+    }
+    
+    if (passwordForm.new.length < 6) {
+      setPasswordError('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+    
+    try {
+      await changePassword(passwordForm.current, passwordForm.new);
+      setPasswordSuccess('Contraseña actualizada correctamente');
+      setPasswordForm({ current: '', new: '', confirm: '' });
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordSuccess('');
+      }, 2000);
+    } catch (err) {
+      setPasswordError(err.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex">
       {/* Responsive Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <SidebarLogo showText={sidebarOpen} />
         <SidebarNav navItems={navItems} isActive={isActive} sidebarOpen={sidebarOpen} onNavigate={handleNavigate} />
+        
+        {sidebarOpen && user && (
+          <div className="sidebar-user">
+            <div className="sidebar-user-info">
+              <div className="sidebar-user-avatar">
+                <User className="w-5 h-5" />
+              </div>
+              <div className="sidebar-user-details">
+                <span className="sidebar-user-name">{user.username}</span>
+                <span className="sidebar-user-role">
+                  {user.role === 'admin' ? 'Administrador' : 'Usuario'}
+                </span>
+              </div>
+            </div>
+            <div className="sidebar-user-actions">
+              <button
+                onClick={() => setShowPasswordModal(true)}
+                className="sidebar-user-btn"
+                title="Cambiar contraseña"
+              >
+                <Key className="w-4 h-4" />
+                <span>Cambiar contraseña</span>
+              </button>
+              <button
+                onClick={logout}
+                className="sidebar-user-btn logout"
+                title="Cerrar sesión"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Cerrar sesión</span>
+              </button>
+            </div>
+          </div>
+        )}
+        
         <div className="sidebar-footer">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -111,6 +180,59 @@ const Layout = ({ children }) => {
         className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
         onClick={() => setSidebarOpen(false)}
       />
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
+          <div className="password-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="password-modal-header">
+              <h3>Cambiar Contraseña</h3>
+              <button onClick={() => setShowPasswordModal(false)} className="modal-close-btn">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleChangePassword} className="password-modal-form">
+              {passwordError && (
+                <div className="password-error">{passwordError}</div>
+              )}
+              {passwordSuccess && (
+                <div className="password-success">{passwordSuccess}</div>
+              )}
+              <div className="form-group">
+                <label>Contraseña actual</label>
+                <input
+                  type="password"
+                  value={passwordForm.current}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, current: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Nueva contraseña</label>
+                <input
+                  type="password"
+                  value={passwordForm.new}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, new: e.target.value }))}
+                  required
+                  minLength={6}
+                />
+              </div>
+              <div className="form-group">
+                <label>Confirmar nueva contraseña</label>
+                <input
+                  type="password"
+                  value={passwordForm.confirm}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, confirm: e.target.value }))}
+                  required
+                />
+              </div>
+              <button type="submit" className="password-submit-btn">
+                Cambiar Contraseña
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

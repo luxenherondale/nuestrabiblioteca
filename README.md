@@ -63,7 +63,20 @@ Asegúrate de tener MongoDB corriendo localmente en `mongodb://localhost:27017/n
 
 O modifica la URI en `server/index.js` para usar MongoDB Atlas.
 
-### 4. Instalar navegadores de Playwright (para scraping)
+### 4. Configurar variables de entorno
+
+Copia el archivo de ejemplo y configura tus variables:
+
+```bash
+cd server
+cp .env.example .env
+```
+
+Edita `server/.env` y configura:
+- `JWT_SECRET`: Una clave secreta segura para los tokens JWT
+- `MONGODB_URI`: URI de conexión a MongoDB (opcional)
+
+### 5. Instalar navegadores de Playwright (para scraping)
 
 ```bash
 npx playwright install chromium
@@ -93,10 +106,48 @@ npm run dev:server
 npm run dev:frontend
 ```
 
-### 5. Abrir en el navegador
+### 6. Configurar usuarios iniciales
+
+La primera vez que ejecutes la aplicación, necesitas crear los usuarios. Haz una petición POST a:
+
+```bash
+curl -X POST http://localhost:5000/api/auth/setup
+```
+
+Esto creará los siguientes usuarios:
+
+| Usuario | Email | Contraseña inicial | Rol |
+|---------|-------|-------------------|-----|
+| Admin | admin@nuestrabiblioteca.com | admin123 | Administrador |
+| Adaly | adaly@arcia.net | adaly123 | Usuario |
+| Sebastian | tatan@rodrigo.lat | sebastian123 | Usuario |
+
+**⚠️ Importante:** Cambia las contraseñas después del primer inicio de sesión.
+
+### 7. Abrir en el navegador
 
 - Frontend: http://localhost:5173
 - API: http://localhost:5000/api
+
+## 🔐 Sistema de Autenticación
+
+La aplicación cuenta con un sistema de usuarios con los siguientes roles:
+
+### Roles y Permisos
+
+| Rol | Permisos |
+|-----|----------|
+| **Admin** | Acceso completo. Puede editar todas las reseñas. |
+| **Adaly** | Puede ver todo, pero solo editar su propia reseña. |
+| **Sebastian** | Puede ver todo, pero solo editar su propia reseña. |
+
+### Características de seguridad
+
+- Autenticación mediante JWT (JSON Web Tokens)
+- Contraseñas hasheadas con bcrypt (12 rounds)
+- Tokens con expiración de 7 días
+- Protección de rutas en frontend y backend
+- Validación de permisos para edición de reseñas
 
 ## 📁 Estructura del proyecto
 

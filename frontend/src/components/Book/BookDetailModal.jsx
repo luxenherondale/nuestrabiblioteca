@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Edit, Trash2, MapPin, Calendar, BookOpen, Check, XCircle, User, MessageSquare, ExternalLink, Save, Plus, Tag, Star } from 'lucide-react';
+import { X, Edit, Trash2, MapPin, Calendar, BookOpen, Check, XCircle, User, MessageSquare, ExternalLink, Save, Plus, Tag, Star, Lock } from 'lucide-react';
 import { useLibrary } from '../../contexts/LibraryContext.jsx';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 
 const StarRating = ({ rating, onChange, color = 'amber', readonly = false }) => {
   const [hoverRating, setHoverRating] = useState(0);
@@ -132,12 +133,14 @@ const getCategoryColor = (categoryId) => {
 
 const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
   const { updateBook, updateReadingStatus, deleteBook, categories } = useLibrary();
+  const { canEditReview } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     location: book.location || 'Biblioteca Principal',
     customLocation: book.customLocation || '',
     categories: book.categories?.map(c => c._id) || [],
-    genre: book.genre || ''
+    genre: book.genre || '',
+    coverImage: book.coverImage || ''
   });
   const [reviewForm, setReviewForm] = useState({
     adaly: {
@@ -218,9 +221,9 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1">
-            {book.coverImage ? (
+            {(isEditing ? editForm.coverImage : book.coverImage) ? (
               <img
-                src={book.coverImage}
+                src={isEditing ? editForm.coverImage : book.coverImage}
                 alt={book.title}
                 className="w-full rounded-lg shadow-lg object-contain max-h-[70vh]"
               />
@@ -230,6 +233,21 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                   <BookOpen className="w-16 h-16 mx-auto mb-2" />
                   <span>Sin portada</span>
                 </div>
+              </div>
+            )}
+            
+            {isEditing && (
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-violet-700 mb-1">
+                  URL de portada
+                </label>
+                <input
+                  type="url"
+                  value={editForm.coverImage}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, coverImage: e.target.value }))}
+                  placeholder="https://ejemplo.com/portada.jpg"
+                  className="input w-full text-sm"
+                />
               </div>
             )}
             
@@ -333,6 +351,9 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                   <h4 className="font-medium text-emerald-800 flex items-center">
                     <User className="w-4 h-4 mr-2 text-emerald-500" />
                     Adaly
+                    {!canEditReview('adaly') && (
+                      <Lock className="w-3 h-3 ml-2 text-gray-400" title="Solo Adaly puede editar esta reseña" />
+                    )}
                   </h4>
                   <div className="flex items-center gap-2">
                     {reviewForm.adaly.read ? (
@@ -340,18 +361,22 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                     ) : (
                       <XCircle className="w-5 h-5 text-pink-300" />
                     )}
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={reviewForm.adaly.read}
-                        onChange={(e) => setReviewForm(prev => ({
-                          ...prev,
-                          adaly: { ...prev.adaly, read: e.target.checked }
-                        }))}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-pink-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-400"></div>
-                    </label>
+                    {canEditReview('adaly') ? (
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={reviewForm.adaly.read}
+                          onChange={(e) => setReviewForm(prev => ({
+                            ...prev,
+                            adaly: { ...prev.adaly, read: e.target.checked }
+                          }))}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-pink-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-400"></div>
+                      </label>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">Solo lectura</span>
+                    )}
                   </div>
                 </div>
                 
@@ -368,6 +393,7 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                         adaly: { ...prev.adaly, rating: value }
                       }))}
                       color="emerald"
+                      readonly={!canEditReview('adaly')}
                     />
                   </div>
 
@@ -381,9 +407,10 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                         ...prev,
                         adaly: { ...prev.adaly, review: e.target.value }
                       }))}
-                      placeholder="Escribe tu reseña..."
+                      placeholder={canEditReview('adaly') ? "Escribe tu reseña..." : ""}
                       className="textarea text-sm"
                       rows={3}
+                      disabled={!canEditReview('adaly')}
                     />
                   </div>
 
@@ -402,6 +429,7 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                             adaly: { ...prev.adaly, reviewDate: e.target.value ? new Date(e.target.value).toISOString() : '' }
                           }))}
                           className="input w-full text-sm"
+                          disabled={!canEditReview('adaly')}
                         />
                       </div>
 
@@ -417,8 +445,9 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                             ...prev,
                             adaly: { ...prev.adaly, goodreadsUrl: e.target.value }
                           }))}
-                          placeholder="https://goodreads.com/... o tu blog"
+                          placeholder={canEditReview('adaly') ? "https://goodreads.com/... o tu blog" : ""}
                           className="input w-full text-sm"
+                          disabled={!canEditReview('adaly')}
                         />
                         {reviewForm.adaly.goodreadsUrl && (
                           <a href={reviewForm.adaly.goodreadsUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1 inline-flex items-center gap-1">
@@ -436,6 +465,9 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                   <h4 className="font-medium text-sky-800 flex items-center">
                     <User className="w-4 h-4 mr-2 text-sky-500" />
                     Sebastián
+                    {!canEditReview('sebastian') && (
+                      <Lock className="w-3 h-3 ml-2 text-gray-400" title="Solo Sebastián puede editar esta reseña" />
+                    )}
                   </h4>
                   <div className="flex items-center gap-2">
                     {reviewForm.sebastian.read ? (
@@ -443,18 +475,22 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                     ) : (
                       <XCircle className="w-5 h-5 text-pink-300" />
                     )}
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={reviewForm.sebastian.read}
-                        onChange={(e) => setReviewForm(prev => ({
-                          ...prev,
-                          sebastian: { ...prev.sebastian, read: e.target.checked }
-                        }))}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-pink-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-400"></div>
-                    </label>
+                    {canEditReview('sebastian') ? (
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={reviewForm.sebastian.read}
+                          onChange={(e) => setReviewForm(prev => ({
+                            ...prev,
+                            sebastian: { ...prev.sebastian, read: e.target.checked }
+                          }))}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-pink-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-400"></div>
+                      </label>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">Solo lectura</span>
+                    )}
                   </div>
                 </div>
                 
@@ -471,6 +507,7 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                         sebastian: { ...prev.sebastian, rating: value }
                       }))}
                       color="sky"
+                      readonly={!canEditReview('sebastian')}
                     />
                   </div>
 
@@ -484,9 +521,10 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                         ...prev,
                         sebastian: { ...prev.sebastian, review: e.target.value }
                       }))}
-                      placeholder="Escribe tu reseña..."
+                      placeholder={canEditReview('sebastian') ? "Escribe tu reseña..." : ""}
                       className="textarea text-sm"
                       rows={3}
+                      disabled={!canEditReview('sebastian')}
                     />
                   </div>
 
@@ -505,6 +543,7 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                             sebastian: { ...prev.sebastian, reviewDate: e.target.value ? new Date(e.target.value).toISOString() : '' }
                           }))}
                           className="input w-full text-sm"
+                          disabled={!canEditReview('sebastian')}
                         />
                       </div>
 
@@ -520,8 +559,9 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                             ...prev,
                             sebastian: { ...prev.sebastian, goodreadsUrl: e.target.value }
                           }))}
-                          placeholder="https://goodreads.com/... o tu blog"
+                          placeholder={canEditReview('sebastian') ? "https://goodreads.com/... o tu blog" : ""}
                           className="input w-full text-sm"
+                          disabled={!canEditReview('sebastian')}
                         />
                         {reviewForm.sebastian.goodreadsUrl && (
                           <a href={reviewForm.sebastian.goodreadsUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-1 inline-flex items-center gap-1">

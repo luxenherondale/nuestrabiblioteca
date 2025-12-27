@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useRef, useCallback } from 'react';
 import { booksAPI, categoriesAPI } from '../services/api.jsx';
 
 const LibraryContext = createContext();
@@ -74,6 +74,8 @@ const libraryReducer = (state, action) => {
 
 export const LibraryProvider = ({ children }) => {
   const [state, dispatch] = useReducer(libraryReducer, initialState);
+  const debounceRef = useRef(null);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
     loadBooks();
@@ -81,7 +83,24 @@ export const LibraryProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    loadBooks();
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    
+    debounceRef.current = setTimeout(() => {
+      loadBooks();
+    }, 300);
+    
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
   }, [state.filters]);
 
   const loadBooks = async () => {

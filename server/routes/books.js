@@ -180,6 +180,10 @@ router.put('/:id/reading-status', async (req, res) => {
   try {
     const { person, read, rating, review, reviewDate, goodreadsUrl } = req.body;
     
+    if (req.user.role !== 'admin' && req.user.reviewKey !== person) {
+      return res.status(403).json({ message: 'No puedes modificar la reseña de otro usuario' });
+    }
+    
     const updateData = {};
     updateData[`readingStatus.${person}.read`] = read;
     
