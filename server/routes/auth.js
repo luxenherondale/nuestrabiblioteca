@@ -43,15 +43,60 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', authMiddleware, async (req, res) => {
   try {
+    const user = await User.findById(req.user._id).select('-password');
     res.json({
-      id: req.user._id,
-      username: req.user.username,
-      email: req.user.email,
-      role: req.user.role,
-      reviewKey: req.user.reviewKey
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      reviewKey: user.reviewKey,
+      avatar: user.avatar,
+      bio: user.bio,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
     });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor' });
+  }
+});
+
+router.put('/profile', authMiddleware, async (req, res) => {
+  try {
+    const { email, avatar, bio, username } = req.body;
+    const user = await User.findById(req.user._id);
+    
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email: email.toLowerCase() });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Este email ya está en uso' });
+      }
+      user.email = email.toLowerCase();
+    }
+    
+    if (username && username !== user.username) {
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Este nombre de usuario ya está en uso' });
+      }
+      user.username = username;
+    }
+    
+    if (avatar !== undefined) user.avatar = avatar;
+    if (bio !== undefined) user.bio = bio;
+    
+    await user.save();
+    
+    res.json({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      reviewKey: user.reviewKey,
+      avatar: user.avatar,
+      bio: user.bio
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al actualizar perfil' });
   }
 });
 
@@ -81,6 +126,141 @@ router.put('/change-password', authMiddleware, async (req, res) => {
     res.json({ message: 'Contraseña actualizada correctamente' });
   } catch (error) {
     res.status(500).json({ message: 'Error en el servidor' });
+  }
+});
+
+router.get('/users', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Solo administradores pueden ver la lista de usuarios' });
+    }
+    
+    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener usuarios' });
+  }
+});
+
+router.post('/users', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Solo administradores pueden crear usuarios' });
+    }
+    
+    const { username, email, password, role, reviewKey, avatar, bio } = req.body;
+    
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: 'Username, email y contraseña son requeridos' });
+    }
+    
+    const existingUser = await User.findOne({ 
+      $or: [{ email: email.toLowerCase() }, { username }] 
+    });
+    
+    if (existingUser) {
+      return res.status(400).json({ message: 'El email o nombre de usuario ya existe' });
+    }
+    
+    const user = new User({
+      username,
+      email: email.toLowerCase(),
+      password,
+      role: role || 'user',
+      reviewKey: reviewKey || null,
+      avatar: avatar || '',
+      bio: bio || ''
+    });
+    
+    await user.save();
+    
+    res.status(201).json({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      reviewKey: user.reviewKey,
+      avatar: user.avatar,
+      bio: user.bio,
+      createdAt: user.createdAt
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al crear usuario: ' + error.message });
+  }
+});
+
+router.put('/users/:id', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Solo administradores pueden editar usuarios' });
+    }
+    
+    const { username, email, password, role, reviewKey, avatar, bio } = req.body;
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    
+    if (email && email.toLowerCase() !== user.email) {
+      const existingUser = await User.findOne({ email: email.toLowerCase() });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Este email ya está en uso' });
+      }
+      user.email = email.toLowerCase();
+    }
+    
+    if (username && username !== user.username) {
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Este nombre de usuario ya está en uso' });
+      }
+      user.username = username;
+    }
+    
+    if (password) user.password = password;
+    if (role) user.role = role;
+    if (reviewKey !== undefined) user.reviewKey = reviewKey;
+    if (avatar !== undefined) user.avatar = avatar;
+    if (bio !== undefined) user.bio = bio;
+    
+    await user.save();
+    
+    res.json({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      reviewKey: user.reviewKey,
+      avatar: user.avatar,
+      bio: user.bio,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al actualizar usuario' });
+  }
+});
+
+router.delete('/users/:id', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Solo administradores pueden eliminar usuarios' });
+    }
+    
+    if (req.params.id === req.user._id.toString()) {
+      return res.status(400).json({ message: 'No puedes eliminarte a ti mismo' });
+    }
+    
+    const user = await User.findByIdAndDelete(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    
+    res.json({ message: 'Usuario eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al eliminar usuario' });
   }
 });
 

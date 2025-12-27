@@ -74,6 +74,65 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateProfile = async (profileData) => {
+    try {
+      setError(null);
+      const response = await axios.put(`${API_URL}/auth/profile`, profileData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(response.data);
+      return response.data;
+    } catch (err) {
+      const message = err.response?.data?.message || 'Error al actualizar perfil';
+      setError(message);
+      throw new Error(message);
+    }
+  };
+
+  const getUsers = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/auth/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'Error al obtener usuarios');
+    }
+  };
+
+  const createUser = async (userData) => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/users`, userData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'Error al crear usuario');
+    }
+  };
+
+  const updateUser = async (userId, userData) => {
+    try {
+      const response = await axios.put(`${API_URL}/auth/users/${userId}`, userData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'Error al actualizar usuario');
+    }
+  };
+
+  const deleteUser = async (userId) => {
+    try {
+      await axios.delete(`${API_URL}/auth/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return true;
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'Error al eliminar usuario');
+    }
+  };
+
   const canEditReview = (reviewKey) => {
     if (!user) return false;
     if (user.role === 'admin') return true;
@@ -88,6 +147,11 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     changePassword,
+    updateProfile,
+    getUsers,
+    createUser,
+    updateUser,
+    deleteUser,
     canEditReview,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin'

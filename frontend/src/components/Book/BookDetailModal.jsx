@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { X, Edit, Trash2, MapPin, Calendar, BookOpen, Check, XCircle, User, MessageSquare, ExternalLink, Save, Plus, Tag, Star, Lock } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Edit, Trash2, MapPin, Calendar, BookOpen, Check, XCircle, User, MessageSquare, ExternalLink, Save, Plus, Tag, Star, Lock, Upload, Download } from 'lucide-react';
 import { useLibrary } from '../../contexts/LibraryContext.jsx';
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import axios from 'axios';
+
+const API_URL = 'http://localhost:5000';
 
 const StarRating = ({ rating, onChange, color = 'amber', readonly = false }) => {
   const [hoverRating, setHoverRating] = useState(0);
@@ -133,8 +136,12 @@ const getCategoryColor = (categoryId) => {
 
 const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
   const { updateBook, updateReadingStatus, deleteBook, categories } = useLibrary();
-  const { canEditReview } = useAuth();
+  const { canEditReview, token } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [downloadingCover, setDownloadingCover] = useState(false);
+  const [coverMessage, setCoverMessage] = useState('');
+  const coverInputRef = useRef(null);
   const [editForm, setEditForm] = useState({
     location: book.location || 'Biblioteca Principal',
     customLocation: book.customLocation || '',
@@ -191,6 +198,55 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
     }
   };
 
+  const handleCoverUpload = async (file) => {
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('cover', file);
+    
+    setUploadingCover(true);
+    setCoverMessage('');
+    try {
+      const response = await axios.post(`${API_URL}/api/upload/cover`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      setEditForm(prev => ({ ...prev, coverImage: `${API_URL}${response.data.coverUrl}` }));
+      setCoverMessage('✓ Portada subida');
+    } catch (err) {
+      setCoverMessage('Error: ' + (err.response?.data?.message || 'Error al subir'));
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const handleDownloadCover = async () => {
+    if (!editForm.coverImage || !editForm.coverImage.startsWith('http')) return;
+    if (editForm.coverImage.startsWith(API_URL)) {
+      setCoverMessage('✓ Ya está en el servidor');
+      return;
+    }
+    
+    setDownloadingCover(true);
+    setCoverMessage('');
+    try {
+      const response = await axios.post(`${API_URL}/api/upload/cover-from-url`, 
+        { url: editForm.coverImage },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setEditForm(prev => ({ ...prev, coverImage: `${API_URL}${response.data.coverUrl}` }));
+      setCoverMessage('✓ Portada guardada en servidor');
+    } catch (err) {
+      setCoverMessage('Error: ' + (err.response?.data?.message || 'Error al descargar'));
+    } finally {
+      setDownloadingCover(false);
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'No leído';
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -239,15 +295,52 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
             {isEditing && (
               <div className="mt-3">
                 <label className="block text-sm font-medium text-violet-700 mb-1">
-                  URL de portada
+                  Portada
                 </label>
-                <input
-                  type="url"
-                  value={editForm.coverImage}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, coverImage: e.target.value }))}
-                  placeholder="https://ejemplo.com/portada.jpg"
-                  className="input w-full text-sm"
-                />
+                <div className="cover-edit-container">
+                  <input
+                    type="url"
+                    value={editForm.coverImage}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, coverImage: e.target.value }))}
+                    placeholder="URL o subir archivo..."
+                    className="input text-sm cover-url-field"
+                  />
+                  <div className="cover-edit-buttons">
+                    <button
+                      type="button"
+                      onClick={handleDownloadCover}
+                      disabled={downloadingCover || !editForm.coverImage}
+                      className="btn btn-sm bg-emerald-500 hover:bg-emerald-600 text-white"
+                      title="Guardar en servidor"
+                    >
+                      {downloadingCover ? '...' : <Download className="w-4 h-4" />}
+                    </button>
+                    <input
+                      type="file"
+                      ref={coverInputRef}
+                      accept="image/jpeg,image/png,image/gif,image/webp,image/avif"
+                      onChange={(e) => e.target.files[0] && handleCoverUpload(e.target.files[0])}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => coverInputRef.current?.click()}
+                      disabled={uploadingCover}
+                      className="btn btn-sm bg-violet-500 hover:bg-violet-600 text-white"
+                      title="Subir archivo"
+                    >
+                      {uploadingCover ? '...' : <Upload className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                {coverMessage && (
+                  <p className={`text-xs mt-1 ${coverMessage.startsWith('Error') ? 'text-red-500' : 'text-green-600'}`}>
+                    {coverMessage}
+                  </p>
+                )}
+                {editForm.coverImage?.includes('/uploads/') && !coverMessage && (
+                  <p className="text-xs text-green-600 mt-1">✓ Guardada en servidor</p>
+                )}
               </div>
             )}
             
@@ -356,26 +449,40 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                     )}
                   </h4>
                   <div className="flex items-center gap-2">
-                    {reviewForm.adaly.read ? (
-                      <Check className="w-5 h-5 text-emerald-500" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-pink-300" />
-                    )}
                     {canEditReview('adaly') ? (
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={reviewForm.adaly.read}
-                          onChange={(e) => setReviewForm(prev => ({
-                            ...prev,
-                            adaly: { ...prev.adaly, read: e.target.checked }
-                          }))}
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-pink-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-400"></div>
+                      <label 
+                        className={`read-status-btn ${reviewForm.adaly.read ? 'read' : 'unread'}`}
+                        onClick={() => setReviewForm(prev => ({
+                          ...prev,
+                          adaly: { ...prev.adaly, read: !prev.adaly.read }
+                        }))}
+                      >
+                        {reviewForm.adaly.read ? (
+                          <>
+                            <Check className="w-5 h-5" />
+                            <span>Leído</span>
+                          </>
+                        ) : (
+                          <>
+                            <BookOpen className="w-5 h-5" />
+                            <span>Marcar como leído</span>
+                          </>
+                        )}
                       </label>
                     ) : (
-                      <span className="text-xs text-gray-400 italic">Solo lectura</span>
+                      <div className={`read-status-badge ${reviewForm.adaly.read ? 'read' : 'unread'}`}>
+                        {reviewForm.adaly.read ? (
+                          <>
+                            <Check className="w-4 h-4" />
+                            <span>Leído</span>
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-4 h-4" />
+                            <span>No leído</span>
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -470,26 +577,40 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
                     )}
                   </h4>
                   <div className="flex items-center gap-2">
-                    {reviewForm.sebastian.read ? (
-                      <Check className="w-5 h-5 text-sky-500" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-pink-300" />
-                    )}
                     {canEditReview('sebastian') ? (
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={reviewForm.sebastian.read}
-                          onChange={(e) => setReviewForm(prev => ({
-                            ...prev,
-                            sebastian: { ...prev.sebastian, read: e.target.checked }
-                          }))}
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-pink-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-400"></div>
+                      <label 
+                        className={`read-status-btn sebastian ${reviewForm.sebastian.read ? 'read' : 'unread'}`}
+                        onClick={() => setReviewForm(prev => ({
+                          ...prev,
+                          sebastian: { ...prev.sebastian, read: !prev.sebastian.read }
+                        }))}
+                      >
+                        {reviewForm.sebastian.read ? (
+                          <>
+                            <Check className="w-5 h-5" />
+                            <span>Leído</span>
+                          </>
+                        ) : (
+                          <>
+                            <BookOpen className="w-5 h-5" />
+                            <span>Marcar como leído</span>
+                          </>
+                        )}
                       </label>
                     ) : (
-                      <span className="text-xs text-gray-400 italic">Solo lectura</span>
+                      <div className={`read-status-badge sebastian ${reviewForm.sebastian.read ? 'read' : 'unread'}`}>
+                        {reviewForm.sebastian.read ? (
+                          <>
+                            <Check className="w-4 h-4" />
+                            <span>Leído</span>
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-4 h-4" />
+                            <span>No leído</span>
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

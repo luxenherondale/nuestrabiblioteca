@@ -30,13 +30,27 @@ const userSchema = new mongoose.Schema({
     enum: ['adaly', 'sebastian', null],
     default: null
   },
+  avatar: {
+    type: String,
+    default: ''
+  },
+  bio: {
+    type: String,
+    default: '',
+    maxlength: 500
+  },
   createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
     type: Date,
     default: Date.now
   }
 });
 
 userSchema.pre('save', async function() {
+  this.updatedAt = new Date();
   if (!this.isModified('password')) return;
   
   const salt = await bcrypt.genSalt(12);

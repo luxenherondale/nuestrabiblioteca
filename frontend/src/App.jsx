@@ -7,6 +7,8 @@ import HomePage from './pages/HomePage';
 import LibraryPage from './pages/LibraryPage';
 import StatisticsPage from './pages/StatisticsPage';
 import LoginPage from './pages/LoginPage';
+import SettingsPage from './pages/SettingsPage';
+import ImportPage from './pages/ImportPage';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -64,6 +66,8 @@ function AppContent() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/biblioteca" element={<LibraryPage />} />
                   <Route path="/estadisticas" element={<StatisticsPage />} />
+                  <Route path="/importacion" element={<ImportPage />} />
+                  <Route path="/configuracion" element={<SettingsPage />} />
                 </Routes>
               </Layout>
             </LibraryProvider>
