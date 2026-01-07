@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, BarChart3, Home, Menu, X, User, LogOut, Settings, FileSpreadsheet } from 'lucide-react';
+import { BookOpen, BarChart3, Home, Menu, X, User, LogOut, Settings, FileSpreadsheet, Tag } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import './Layout.css';
 
@@ -52,6 +52,7 @@ const Layout = ({ children }) => {
   const navItems = [
     { path: '/', label: 'Inicio', icon: Home, color: 'from-blue-500 to-blue-600' },
     { path: '/biblioteca', label: 'Biblioteca', icon: BookOpen, color: 'from-purple-500 to-purple-600' },
+    { path: '/categorias', label: 'Categorías', icon: Tag, color: 'from-pink-500 to-pink-600' },
     { path: '/estadisticas', label: 'Estadísticas', icon: BarChart3, color: 'from-emerald-500 to-emerald-600' },
     { path: '/importacion', label: 'Importación', icon: FileSpreadsheet, color: 'from-amber-500 to-amber-600' },
   ];

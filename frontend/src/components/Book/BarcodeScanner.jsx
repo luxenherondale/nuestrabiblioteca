@@ -28,69 +28,93 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
   useEffect(() => {
     if (!isOpen || !scannerContainerRef.current || isInitialized.current) return;
 
-    const initScanner = () => {
+    const initScanner = async () => {
       setError('');
       setDetected('');
 
-      Quagga.init(
-        {
-          inputStream: {
-            type: 'LiveStream',
-            constraints: {
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-              facingMode: 'environment'
-            },
-            target: scannerContainerRef.current,
-            area: {
-              top: '0%',
-              right: '0%',
-              left: '0%',
-              bottom: '0%'
-            }
-          },
-          decoder: {
-            readers: [
-              'ean_reader',
-              'ean_8_reader',
-              'upc_reader',
-              'upc_e_reader',
-              'code_128_reader'
-            ]
-          },
-          locate: true,
-          locator: {
-            patchSize: 'medium',
-            halfSample: true
-          },
-          numOfWorkers: navigator.hardwareConcurrency || 4,
-          frequency: 10
-        },
-        (err) => {
-          if (err) {
-            console.error('Error inicializando Quagga:', err);
-            setError('No se pudo acceder a la cámara. Verifica los permisos.');
-            setScanning(false);
-            return;
+      // Detect if mobile device
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      // Mobile-friendly constraints with fallback
+      const constraints = isMobile
+        ? {
+            width: { min: 320, ideal: 640, max: 1280 },
+            height: { min: 240, ideal: 480, max: 720 },
+            facingMode: 'environment'
           }
+        : {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: 'environment'
+          };
 
-          Quagga.start();
-          isInitialized.current = true;
-          setScanning(true);
-
-          Quagga.onDetected((result) => {
-            if (result.codeResult && result.codeResult.code) {
-              const barcode = result.codeResult.code;
-              setDetected(barcode);
-              
-              setTimeout(() => {
-                onBarcodeDetected(barcode);
-                handleClose();
-              }, 500);
+      const initWithConstraints = (videoConstraints) => {
+        Quagga.init(
+          {
+            inputStream: {
+              type: 'LiveStream',
+              constraints: videoConstraints,
+              target: scannerContainerRef.current,
+              area: {
+                top: '0%',
+                right: '0%',
+                left: '0%',
+                bottom: '0%'
+              }
+            },
+            decoder: {
+              readers: [
+                'ean_reader',
+                'ean_8_reader',
+                'upc_reader',
+                'upc_e_reader',
+                'code_128_reader'
+              ]
+            },
+            locate: true,
+            locator: {
+              patchSize: isMobile ? 'small' : 'medium',
+              halfSample: true
+            },
+            numOfWorkers: isMobile ? 2 : (navigator.hardwareConcurrency || 4),
+            frequency: 10
+          },
+          (err) => {
+            if (err) {
+              console.error('Error inicializando Quagga:', err);
+              // Try fallback without facingMode constraint
+              if (videoConstraints.facingMode) {
+                console.log('Intentando sin facingMode...');
+                const fallbackConstraints = { ...videoConstraints };
+                delete fallbackConstraints.facingMode;
+                initWithConstraints(fallbackConstraints);
+                return;
+              }
+              setError('No se pudo acceder a la cámara. Verifica los permisos.');
+              setScanning(false);
+              return;
             }
-          });
-        }
-      );
+
+            Quagga.start();
+            isInitialized.current = true;
+            setScanning(true);
+
+            Quagga.onDetected((result) => {
+              if (result.codeResult && result.codeResult.code) {
+                const barcode = result.codeResult.code;
+                setDetected(barcode);
+                
+                setTimeout(() => {
+                  onBarcodeDetected(barcode);
+                  handleClose();
+                }, 500);
+              }
+            });
+          }
+        );
+      };
+
+      initWithConstraints(constraints);
     };
 
     // Small delay to ensure DOM is ready

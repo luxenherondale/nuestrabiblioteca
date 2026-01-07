@@ -55,6 +55,15 @@ export const booksAPI = {
     api.put(`/books/${id}/reading-status`, { person, read, rating, review, reviewDate, goodreadsUrl }),
   
   delete: (id) => api.delete(`/books/${id}`),
+  
+  // Categories
+  getCategories: () => api.get('/categories'),
+  
+  createCategory: (data) => api.post('/categories', data),
+  
+  updateCategory: (id, data) => api.put(`/categories/${id}`, data),
+  
+  deleteCategory: (id) => api.delete(`/categories/${id}`),
 };
 
 export const categoriesAPI = {
