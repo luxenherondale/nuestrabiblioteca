@@ -1,107 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Loader } from 'lucide-react';
 import Quagga from '@ericblade/quagga2';
 
 const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
-  const videoRef = useRef(null);
+  const scannerContainerRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState('');
   const [detected, setDetected] = useState('');
-  const scannerRef = useRef(null);
+  const isInitialized = useRef(false);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const initScanner = async () => {
+  const handleClose = useCallback(() => {
+    if (isInitialized.current) {
       try {
-        setError('');
-        setDetected('');
-        setScanning(true);
-
-        await Quagga.init(
-          {
-            inputStream: {
-              type: 'LiveStream',
-              constraints: {
-                width: { min: 640 },
-                height: { min: 480 },
-                facingMode: 'environment'
-              },
-              target: videoRef.current
-            },
-            decoder: {
-              readers: [
-                'ean_reader',
-                'ean_8_reader',
-                'code_128_reader',
-                'code_39_reader',
-                'code_39_vin_reader',
-                'codabar_reader',
-                'upc_reader',
-                'upc_e_reader',
-                'i2of5_reader'
-              ],
-              debug: {
-                showCanvas: false,
-                showPatternLabels: false,
-                showFrequency: false,
-                showSkeleton: false
-              }
-            },
-            locator: {
-              halfSample: true
-            },
-            numOfWorkers: 4,
-            frequency: 10
-          },
-          (err) => {
-            if (err) {
-              console.error('Error inicializando Quagga:', err);
-              setError('No se pudo acceder a la cámara. Verifica los permisos.');
-              setScanning(false);
-              return;
-            }
-
-            Quagga.start();
-            scannerRef.current = Quagga;
-
-            Quagga.onDetected((result) => {
-              if (result.codeResult && result.codeResult.code) {
-                const barcode = result.codeResult.code;
-                setDetected(barcode);
-                
-                setTimeout(() => {
-                  onBarcodeDetected(barcode);
-                  handleClose();
-                }, 500);
-              }
-            });
-          }
-        );
-      } catch (err) {
-        console.error('Error en scanner:', err);
-        setError('Error al inicializar el escáner: ' + err.message);
-        setScanning(false);
-      }
-    };
-
-    initScanner();
-
-    return () => {
-      if (scannerRef.current) {
-        try {
-          Quagga.stop();
-        } catch (err) {
-          console.error('Error deteniendo Quagga:', err);
-        }
-      }
-    };
-  }, [isOpen, onBarcodeDetected]);
-
-  const handleClose = () => {
-    if (scannerRef.current) {
-      try {
+        Quagga.offDetected();
         Quagga.stop();
+        isInitialized.current = false;
       } catch (err) {
         console.error('Error deteniendo Quagga:', err);
       }
@@ -110,7 +23,92 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
     setDetected('');
     setError('');
     onClose();
-  };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!isOpen || !scannerContainerRef.current || isInitialized.current) return;
+
+    const initScanner = () => {
+      setError('');
+      setDetected('');
+
+      Quagga.init(
+        {
+          inputStream: {
+            type: 'LiveStream',
+            constraints: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              facingMode: 'environment'
+            },
+            target: scannerContainerRef.current,
+            area: {
+              top: '0%',
+              right: '0%',
+              left: '0%',
+              bottom: '0%'
+            }
+          },
+          decoder: {
+            readers: [
+              'ean_reader',
+              'ean_8_reader',
+              'upc_reader',
+              'upc_e_reader',
+              'code_128_reader'
+            ]
+          },
+          locate: true,
+          locator: {
+            patchSize: 'medium',
+            halfSample: true
+          },
+          numOfWorkers: navigator.hardwareConcurrency || 4,
+          frequency: 10
+        },
+        (err) => {
+          if (err) {
+            console.error('Error inicializando Quagga:', err);
+            setError('No se pudo acceder a la cámara. Verifica los permisos.');
+            setScanning(false);
+            return;
+          }
+
+          Quagga.start();
+          isInitialized.current = true;
+          setScanning(true);
+
+          Quagga.onDetected((result) => {
+            if (result.codeResult && result.codeResult.code) {
+              const barcode = result.codeResult.code;
+              setDetected(barcode);
+              
+              setTimeout(() => {
+                onBarcodeDetected(barcode);
+                handleClose();
+              }, 500);
+            }
+          });
+        }
+      );
+    };
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(initScanner, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (isInitialized.current) {
+        try {
+          Quagga.offDetected();
+          Quagga.stop();
+          isInitialized.current = false;
+        } catch (err) {
+          console.error('Error deteniendo Quagga:', err);
+        }
+      }
+    };
+  }, [isOpen, onBarcodeDetected, handleClose]);
 
   if (!isOpen) return null;
 
@@ -137,12 +135,11 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
         )}
 
         <div className="space-y-4">
-          <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              style={{ display: scanning ? 'block' : 'none' }}
-            />
+          <div 
+            ref={scannerContainerRef}
+            className="relative bg-black rounded-lg overflow-hidden"
+            style={{ aspectRatio: '4/3', minHeight: '300px' }}
+          >
             {!scanning && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
                 <Loader className="w-8 h-8 text-gray-400 animate-spin" />
