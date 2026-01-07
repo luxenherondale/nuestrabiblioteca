@@ -4,9 +4,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node index.js",
+    "start": "node scripts/initializeUsers.js && node index.js",
     "export-books": "node scripts/exportBooks.js",
     "seed-books": "node scripts/seedBooks.js",
+    "init-users": "node scripts/initializeUsers.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
