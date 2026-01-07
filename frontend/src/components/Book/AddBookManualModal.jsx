@@ -175,11 +175,11 @@ const AddBookManualModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6 sticky top-0 bg-white bg-opacity-95 pb-4">
-          <h2 className="text-2xl font-bold text-gray-900">Agregar Libro Manualmente</h2>
-          <button onClick={onClose} className="btn btn-outline">
-            <X className="w-4 h-4" />
+      <div className="modal" style={{ maxWidth: 'min(700px, calc(100% - 2rem))' }}>
+        <div className="flex items-center justify-between mb-6 sticky top-0 bg-white bg-opacity-95 pb-4 -mx-4 px-4 pt-1" style={{ zIndex: 10 }}>
+          <h2 className="text-xl font-bold text-gray-900">Agregar Libro Manualmente</h2>
+          <button onClick={onClose} className="btn btn-outline p-2">
+            <X className="w-5 h-5" />
           </button>
         </div>
 

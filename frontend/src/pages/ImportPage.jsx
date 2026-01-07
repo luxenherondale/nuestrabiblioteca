@@ -236,28 +236,30 @@ const ImportPage = () => {
 
           <div className="format-info">
             <h3>Formato esperado del Excel:</h3>
-            <table className="format-table">
-              <thead>
-                <tr>
-                  <th>TITULO DEL LIBRO</th>
-                  <th>AUTOR</th>
-                  <th>LEIDO POR SEBASTIAN</th>
-                  <th>LEIDO POR ADALY</th>
-                  <th>SIN TERMINAR POR SEBASTIAN</th>
-                  <th>SIN TERMINAR POR ADALY</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Cien años de soledad</td>
-                  <td>Gabriel García Márquez</td>
-                  <td>Sí</td>
-                  <td>Sí</td>
-                  <td></td>
-                  <td></td>
-                </tr>
-              </tbody>
-            </table>
+            <div className="format-table-container">
+              <table className="format-table">
+                <thead>
+                  <tr>
+                    <th>TITULO DEL LIBRO</th>
+                    <th>AUTOR</th>
+                    <th>LEIDO POR SEBASTIAN</th>
+                    <th>LEIDO POR ADALY</th>
+                    <th>SIN TERMINAR POR SEBASTIAN</th>
+                    <th>SIN TERMINAR POR ADALY</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Cien años de soledad</td>
+                    <td>Gabriel García Márquez</td>
+                    <td>Sí</td>
+                    <td>Sí</td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

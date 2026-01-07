@@ -1,15 +1,24 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { X, Loader } from 'lucide-react';
+import { X, Loader, Camera, AlertTriangle, Keyboard } from 'lucide-react';
 import Quagga from '@ericblade/quagga2';
 
 const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
   const scannerContainerRef = useRef(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState('');
   const [detected, setDetected] = useState('');
+  const [permissionStatus, setPermissionStatus] = useState('pending');
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualIsbn, setManualIsbn] = useState('');
   const isInitialized = useRef(false);
 
-  const handleClose = useCallback(() => {
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
     if (isInitialized.current) {
       try {
         Quagga.offDetected();
@@ -19,176 +28,338 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
         console.error('Error deteniendo Quagga:', err);
       }
     }
+  }, []);
+
+  const handleClose = useCallback(() => {
+    stopCamera();
     setScanning(false);
     setDetected('');
     setError('');
+    setPermissionStatus('pending');
+    setShowManualInput(false);
+    setManualIsbn('');
     onClose();
-  }, [onClose]);
+  }, [onClose, stopCamera]);
+
+  const handleManualSubmit = () => {
+    const cleanIsbn = manualIsbn.replace(/[-\s]/g, '').trim();
+    if (cleanIsbn.length >= 10) {
+      onBarcodeDetected(cleanIsbn);
+      handleClose();
+    } else {
+      setError('El ISBN debe tener al menos 10 dígitos');
+    }
+  };
 
   useEffect(() => {
-    if (!isOpen || !scannerContainerRef.current || isInitialized.current) return;
+    if (!isOpen) return;
 
     const initScanner = async () => {
       setError('');
       setDetected('');
+      setPermissionStatus('requesting');
 
-      // Detect if mobile device
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      // Mobile-friendly constraints with fallback
-      const constraints = isMobile
-        ? {
-            width: { min: 320, ideal: 640, max: 1280 },
-            height: { min: 240, ideal: 480, max: 720 },
-            facingMode: 'environment'
-          }
-        : {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: 'environment'
-          };
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-      const initWithConstraints = (videoConstraints) => {
-        Quagga.init(
-          {
-            inputStream: {
-              type: 'LiveStream',
-              constraints: videoConstraints,
-              target: scannerContainerRef.current,
-              area: {
-                top: '0%',
-                right: '0%',
-                left: '0%',
-                bottom: '0%'
-              }
-            },
-            decoder: {
-              readers: [
-                'ean_reader',
-                'ean_8_reader',
-                'upc_reader',
-                'upc_e_reader',
-                'code_128_reader'
-              ]
-            },
-            locate: true,
-            locator: {
-              patchSize: isMobile ? 'small' : 'medium',
-              halfSample: true
-            },
-            numOfWorkers: isMobile ? 2 : (navigator.hardwareConcurrency || 4),
-            frequency: 10
+      try {
+        const videoConstraints = {
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: isMobile ? 640 : 1280 },
+            height: { ideal: isMobile ? 480 : 720 }
           },
-          (err) => {
-            if (err) {
-              console.error('Error inicializando Quagga:', err);
-              // Try fallback without facingMode constraint
-              if (videoConstraints.facingMode) {
-                console.log('Intentando sin facingMode...');
-                const fallbackConstraints = { ...videoConstraints };
-                delete fallbackConstraints.facingMode;
-                initWithConstraints(fallbackConstraints);
+          audio: false
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(videoConstraints);
+        streamRef.current = stream;
+        setPermissionStatus('granted');
+
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        if (!scannerContainerRef.current || isInitialized.current) {
+          stopCamera();
+          return;
+        }
+
+        const quaggaConfig = {
+          inputStream: {
+            type: 'LiveStream',
+            target: scannerContainerRef.current,
+            constraints: {
+              facingMode: 'environment',
+              width: { ideal: isMobile ? 640 : 1280 },
+              height: { ideal: isMobile ? 480 : 720 }
+            },
+            area: {
+              top: '10%',
+              right: '10%',
+              left: '10%',
+              bottom: '10%'
+            }
+          },
+          decoder: {
+            readers: [
+              'ean_reader',
+              'ean_8_reader',
+              'upc_reader',
+              'upc_e_reader',
+              'code_128_reader'
+            ],
+            multiple: false
+          },
+          locate: true,
+          locator: {
+            patchSize: isMobile ? 'medium' : 'large',
+            halfSample: isMobile
+          },
+          numOfWorkers: isMobile ? 2 : Math.min(navigator.hardwareConcurrency || 4, 4),
+          frequency: isMobile ? 5 : 10
+        };
+
+        Quagga.init(quaggaConfig, (err) => {
+          if (err) {
+            console.error('Error inicializando Quagga:', err);
+            
+            const simplifiedConfig = {
+              ...quaggaConfig,
+              inputStream: {
+                ...quaggaConfig.inputStream,
+                constraints: {
+                  width: { ideal: 640 },
+                  height: { ideal: 480 }
+                }
+              },
+              locator: {
+                patchSize: 'small',
+                halfSample: true
+              },
+              numOfWorkers: 1
+            };
+
+            Quagga.init(simplifiedConfig, (fallbackErr) => {
+              if (fallbackErr) {
+                console.error('Error en fallback:', fallbackErr);
+                setError('No se pudo iniciar el escáner. Usa la entrada manual.');
+                setShowManualInput(true);
+                stopCamera();
                 return;
               }
-              setError('No se pudo acceder a la cámara. Verifica los permisos.');
-              setScanning(false);
-              return;
+
+              startQuagga();
+            });
+            return;
+          }
+
+          startQuagga();
+        });
+
+        function startQuagga() {
+          Quagga.start();
+          isInitialized.current = true;
+          setScanning(true);
+
+          const videoElement = scannerContainerRef.current?.querySelector('video');
+          if (videoElement) {
+            videoElement.setAttribute('playsinline', 'true');
+            videoElement.setAttribute('autoplay', 'true');
+            videoElement.setAttribute('muted', 'true');
+            videoElement.style.width = '100%';
+            videoElement.style.height = '100%';
+            videoElement.style.objectFit = 'cover';
+            
+            if (isIOS) {
+              videoElement.play().catch(console.error);
             }
+          }
 
-            Quagga.start();
-            isInitialized.current = true;
-            setScanning(true);
+          Quagga.onDetected((result) => {
+            if (result.codeResult && result.codeResult.code) {
+              const barcode = result.codeResult.code;
+              const confidence = result.codeResult.decodedCodes?.reduce((acc, code) => {
+                return code.error !== undefined ? acc + code.error : acc;
+              }, 0) || 0;
 
-            Quagga.onDetected((result) => {
-              if (result.codeResult && result.codeResult.code) {
-                const barcode = result.codeResult.code;
+              if (confidence < 0.5 || barcode.length >= 10) {
                 setDetected(barcode);
                 
                 setTimeout(() => {
                   onBarcodeDetected(barcode);
                   handleClose();
-                }, 500);
+                }, 600);
               }
-            });
-          }
-        );
-      };
+            }
+          });
+        }
 
-      initWithConstraints(constraints);
+      } catch (err) {
+        console.error('Error accediendo a cámara:', err);
+        setPermissionStatus('denied');
+        
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          setError('Permiso de cámara denegado. Habilita el acceso en la configuración del navegador.');
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          setError('No se encontró ninguna cámara en este dispositivo.');
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          setError('La cámara está en uso por otra aplicación.');
+        } else if (err.name === 'OverconstrainedError') {
+          setError('La cámara no soporta la configuración requerida.');
+        } else {
+          setError(`Error de cámara: ${err.message || 'Error desconocido'}`);
+        }
+        
+        setShowManualInput(true);
+      }
     };
 
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(initScanner, 100);
+    const timer = setTimeout(initScanner, 200);
 
     return () => {
       clearTimeout(timer);
-      if (isInitialized.current) {
-        try {
-          Quagga.offDetected();
-          Quagga.stop();
-          isInitialized.current = false;
-        } catch (err) {
-          console.error('Error deteniendo Quagga:', err);
-        }
-      }
+      stopCamera();
     };
-  }, [isOpen, onBarcodeDetected, handleClose]);
+  }, [isOpen, onBarcodeDetected, handleClose, stopCamera]);
 
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay">
       <div className="modal" style={{ maxWidth: 'min(600px, calc(100% - 2rem))' }}>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Escanear Código de Barras</h2>
-          <button onClick={handleClose} className="btn btn-outline">
-            <X className="w-4 h-4" />
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">Escanear Código</h2>
+          <button onClick={handleClose} className="btn btn-outline p-2">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            {error}
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-start gap-2">
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <span className="text-sm">{error}</span>
           </div>
         )}
 
         {detected && (
-          <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-center gap-2">
-            <span>✓ ISBN detectado: {detected}</span>
+          <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+            <span className="font-medium">✓ ISBN detectado: {detected}</span>
           </div>
         )}
 
         <div className="space-y-4">
-          <div 
-            ref={scannerContainerRef}
-            className="relative bg-black rounded-lg overflow-hidden w-full"
-            style={{ 
-              width: '100%',
-              aspectRatio: '4/3',
-              minHeight: 'clamp(200px, 60vw, 400px)',
-              maxWidth: '100%'
-            }}
-          >
-            {!scanning && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-                <Loader className="w-8 h-8 text-gray-400 animate-spin" />
+          {!showManualInput ? (
+            <>
+              <div 
+                ref={scannerContainerRef}
+                className="relative bg-black rounded-lg overflow-hidden"
+                style={{ 
+                  width: '100%',
+                  paddingBottom: '75%',
+                  position: 'relative'
+                }}
+              >
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0
+                }}>
+                  {!scanning && permissionStatus !== 'denied' && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 z-10">
+                      <Loader className="w-8 h-8 text-purple-400 animate-spin mb-2" />
+                      <span className="text-gray-400 text-sm">
+                        {permissionStatus === 'requesting' ? 'Solicitando cámara...' : 'Iniciando escáner...'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                <div 
+                  className="absolute inset-0 pointer-events-none z-20"
+                  style={{
+                    border: '2px solid rgba(139, 92, 246, 0.5)',
+                    borderRadius: '0.5rem'
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    top: '30%',
+                    left: '10%',
+                    right: '10%',
+                    height: '40%',
+                    border: '2px solid #a78bfa',
+                    borderRadius: '4px',
+                    background: 'rgba(167, 139, 250, 0.1)'
+                  }} />
+                </div>
               </div>
-            )}
-          </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800">
-              <strong>Instrucciones:</strong>
-            </p>
-            <ul className="text-sm text-blue-700 mt-2 space-y-1">
-              <li>• Apunta la cámara al código de barras o ISBN del libro</li>
-              <li>• Mantén una distancia de 10-20 cm</li>
-              <li>• Asegúrate de que el código esté bien iluminado</li>
-              <li>• El escaneo es automático cuando detecta el código</li>
-            </ul>
-          </div>
+              <div className="text-center">
+                <button
+                  onClick={() => setShowManualInput(true)}
+                  className="text-sm text-purple-600 hover:text-purple-800 underline flex items-center gap-1 mx-auto"
+                >
+                  <Keyboard className="w-4 h-4" />
+                  ¿No funciona? Ingresa el ISBN manualmente
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-center p-4 bg-gray-100 rounded-lg">
+                <Camera className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-600 text-sm">
+                  Ingresa el ISBN manualmente
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ISBN (10 o 13 dígitos)
+                </label>
+                <input
+                  type="text"
+                  value={manualIsbn}
+                  onChange={(e) => setManualIsbn(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleManualSubmit()}
+                  placeholder="978-3-16-148410-0"
+                  className="input"
+                  autoFocus
+                />
+              </div>
 
-          <div className="flex justify-end gap-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setShowManualInput(false);
+                    setError('');
+                  }}
+                  className="btn btn-outline flex-1"
+                >
+                  Volver a cámara
+                </button>
+                <button
+                  onClick={handleManualSubmit}
+                  disabled={manualIsbn.replace(/[-\s]/g, '').length < 10}
+                  className="btn btn-primary flex-1"
+                >
+                  Usar ISBN
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!showManualInput && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-xs text-blue-700">
+                <strong>Tips:</strong> Mantén distancia de 10-20cm • Buena iluminación • 
+                Código centrado en el recuadro
+              </p>
+            </div>
+          )}
+
+          <div className="flex justify-end">
             <button onClick={handleClose} className="btn btn-outline">
               Cancelar
             </button>
