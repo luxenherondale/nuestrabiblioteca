@@ -208,7 +208,7 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
     setUploadingCover(true);
     setCoverMessage('');
     try {
-      const response = await axios.post(`${API_URL}/api/upload/cover`, formData, {
+      const response = await axios.post(`${API_URL}/upload/cover`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`
@@ -234,7 +234,7 @@ const BookDetailModal = ({ book, onClose, onCategoryClick }) => {
     setDownloadingCover(true);
     setCoverMessage('');
     try {
-      const response = await axios.post(`${API_URL}/api/upload/cover-from-url`, 
+      const response = await axios.post(`${API_URL}/upload/cover-from-url`, 
         { url: editForm.coverImage },
         { headers: { Authorization: `Bearer ${token}` } }
       );

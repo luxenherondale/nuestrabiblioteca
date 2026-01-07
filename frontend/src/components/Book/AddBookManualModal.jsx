@@ -59,7 +59,7 @@ const AddBookManualModal = ({ isOpen, onClose }) => {
     
     setUploadingCover(true);
     try {
-      const response = await axios.post(`${API_URL}/api/upload/cover`, formDataUpload, {
+      const response = await axios.post(`${API_URL}/upload/cover`, formDataUpload, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`
@@ -88,7 +88,7 @@ const AddBookManualModal = ({ isOpen, onClose }) => {
     
     setDownloadingCover(true);
     try {
-      const response = await axios.post(`${API_URL}/api/upload/cover-from-url`, 
+      const response = await axios.post(`${API_URL}/upload/cover-from-url`, 
         { url: formData.coverImage },
         { headers: { Authorization: `Bearer ${token}` } }
       );
