@@ -22,9 +22,12 @@ services:
       - "traefik.http.routers.nuestrabiblioteca-api.entrypoints=websecure"
       - "traefik.http.routers.nuestrabiblioteca-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.nuestrabiblioteca-api.loadbalancer.server.port=5000"
+      - "traefik.http.routers.nuestrabiblioteca-api.priority=100"
       - "traefik.http.routers.nuestrabiblioteca-uploads.rule=Host(`${DOMAIN}`) && PathPrefix(`/uploads`)"
       - "traefik.http.routers.nuestrabiblioteca-uploads.entrypoints=websecure"
       - "traefik.http.routers.nuestrabiblioteca-uploads.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.nuestrabiblioteca-uploads.priority=100"
+      - "traefik.http.services.nuestrabiblioteca-uploads.loadbalancer.server.port=5000"
 
   frontend:
     build:
@@ -43,7 +46,6 @@ services:
       - "traefik.http.routers.nuestrabiblioteca-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.nuestrabiblioteca-frontend.loadbalancer.server.port=80"
       - "traefik.http.routers.nuestrabiblioteca-frontend.priority=1"
-      - "traefik.http.routers.nuestrabiblioteca-api.priority=2"
 
 volumes:
   uploads:
