@@ -137,8 +137,8 @@ const LibraryPage = () => {
         </div>
       )}
 
-      {/* Search and Filters */}
-      <div className="space-y-4">
+      {/* Search, Filters and Reading Status - Unified Container */}
+      <div className="library-controls-container">
         <div className="library-search-input">
           <Search />
           <input
@@ -166,10 +166,9 @@ const LibraryPage = () => {
             />
           </div>
         )}
-      </div>
 
-      {/* Reading Status Filters */}
-      <div className="flex flex-wrap gap-2">
+        {/* Reading Status Filters */}
+        <div className="library-reading-filters">
         <button
           onClick={() => setReadingFilter('all')}
           className={`reading-filter-btn ${readingFilter === 'all' ? 'active' : ''}`}
@@ -205,28 +204,29 @@ const LibraryPage = () => {
           <span className="w-2.5 h-2.5 rounded-full bg-rose-300"></span>
           Sin leer
         </button>
-      </div>
+        </div>
 
-      {/* Category Quick Filters */}
-      {categories.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        {/* Category Quick Filters */}
+        {categories.length > 0 && (
+          <div className="library-category-filters">
           <button
             onClick={() => setFilters({ category: '' })}
             className={`category-filter-btn ${!filters.category ? 'active' : ''}`}
           >
             Todas las categorías
           </button>
-          {categories.map(cat => (
-            <button
-              key={cat._id}
-              onClick={() => setFilters({ category: cat._id })}
-              className={`category-filter-btn ${filters.category === cat._id ? 'active' : ''}`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-      )}
+            {categories.map(cat => (
+              <button
+                key={cat._id}
+                onClick={() => setFilters({ category: cat._id })}
+                className={`category-filter-btn ${filters.category === cat._id ? 'active' : ''}`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Books Grid */}
       {Object.keys(groupedBooks).length === 0 ? (
