@@ -120,10 +120,10 @@ const Layout = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Content Area */}
-        <main className="flex-1 overflow-auto">
-          <div className="p-6 md:p-8">
+        <main className="flex-1 overflow-auto overflow-x-hidden">
+          <div className="p-3 sm:p-4 md:p-6 lg:p-8">
             <div className="mobile-topbar">
               <button
                 type="button"
@@ -142,7 +142,7 @@ const Layout = ({ children }) => {
         </main>
 
         {/* Footer */}
-        <footer className="bg-gray-800/80 backdrop-blur-md border-t border-gray-700 py-4 px-6 md:px-8">
+        <footer className="bg-gray-800/80 backdrop-blur-md border-t border-gray-700 py-3 px-3 sm:py-4 sm:px-4 md:px-6 lg:px-8">
           <div className="text-center text-sm text-gray-400">
             © 2024 Nuestra Biblioteca - Hecho con ❤️ por Adaly & Sebastián
           </div>

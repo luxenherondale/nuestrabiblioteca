@@ -63,12 +63,46 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
       const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
       try {
+        // Intentar obtener la cámara principal (no ultra wide)
+        let selectedDeviceId = null;
+        
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(d => d.kind === 'videoinput');
+          
+          // Buscar cámara trasera que NO sea ultra wide
+          // Prioridad: "back camera" > "rear" > "main" > primera sin "ultra"/"wide angle"
+          const backCameras = videoDevices.filter(d => {
+            const label = d.label.toLowerCase();
+            return label.includes('back') || label.includes('rear') || label.includes('trasera') || 
+                   label.includes('environment') || label.includes('facing back');
+          });
+          
+          if (backCameras.length > 0) {
+            // Preferir la cámara principal, evitar ultra wide
+            const mainCamera = backCameras.find(d => {
+              const label = d.label.toLowerCase();
+              return !label.includes('ultra') && !label.includes('wide angle') && !label.includes('0.5x');
+            }) || backCameras.find(d => {
+              const label = d.label.toLowerCase();
+              return label.includes('main') || label.includes('principal') || label.includes('1x');
+            }) || backCameras[0];
+            
+            selectedDeviceId = mainCamera.deviceId;
+            console.log('Cámara seleccionada:', mainCamera.label);
+          }
+        } catch (enumErr) {
+          console.log('No se pudieron enumerar dispositivos:', enumErr);
+        }
+
         const videoConstraints = {
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: isMobile ? 640 : 1280 },
-            height: { ideal: isMobile ? 480 : 720 }
-          },
+          video: selectedDeviceId 
+            ? { deviceId: { exact: selectedDeviceId } }
+            : {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: isMobile ? 640 : 1280 },
+                height: { ideal: isMobile ? 480 : 720 }
+              },
           audio: false
         };
 
@@ -87,11 +121,13 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
           inputStream: {
             type: 'LiveStream',
             target: scannerContainerRef.current,
-            constraints: {
-              facingMode: 'environment',
-              width: { ideal: isMobile ? 640 : 1280 },
-              height: { ideal: isMobile ? 480 : 720 }
-            },
+            constraints: selectedDeviceId
+              ? { deviceId: { exact: selectedDeviceId } }
+              : {
+                  facingMode: 'environment',
+                  width: { ideal: isMobile ? 640 : 1280 },
+                  height: { ideal: isMobile ? 480 : 720 }
+                },
             area: {
               top: '10%',
               right: '10%',
