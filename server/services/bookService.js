@@ -114,7 +114,18 @@ class BookService {
       // Formatear ISBN con guiones para mejor búsqueda en ISBN Chile
       const formattedIsbn = this.formatISBNWithDashes(isbn);
       
-      browser = await chromium.launch({ headless: true });
+      try {
+        // Use system Chromium if available (set via PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)
+        const launchOptions = { headless: true };
+        if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH) {
+          launchOptions.executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+        }
+        browser = await chromium.launch(launchOptions);
+      } catch (launchError) {
+        console.log('Playwright no disponible en este entorno (faltan binarios del navegador), omitiendo ISBN Chile:', launchError.message);
+        return null;
+      }
+      
       const page = await browser.newPage();
       
       // Ir a la página de búsqueda
