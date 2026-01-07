@@ -18,16 +18,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Aumentar timeout para operaciones largas
-app.use((req, res, next) => {
-  req.setTimeout(300000); // 5 minutos
-  res.setTimeout(300000); // 5 minutos
-  next();
-});
 
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nuestrabiblioteca')
 .then(() => console.log('Conectado a MongoDB'))
