@@ -139,6 +139,20 @@ class BookService {
       await page.keyboard.press('Escape');
       await page.waitForTimeout(500);
       
+      // Extraer imagen de portada de los resultados de búsqueda
+      const coverImage = await page.evaluate(() => {
+        const imgElement = document.querySelector('div.col-md-6 div.col-md-5 a.titulo img');
+        if (!imgElement) return '';
+        
+        let src = imgElement.getAttribute('src');
+        // Normalize relative paths to absolute URLs
+        if (src && !src.startsWith('http')) {
+          src = src.replace(/^\.\//g, '');
+          src = 'https://isbnchile.cl/' + src;
+        }
+        return src;
+      });
+      
       // Buscar link del título
       const titleLink = await page.$('a.titulo');
       if (!titleLink) {
@@ -205,7 +219,7 @@ class BookService {
         description: bookInfo.description || '',
         pageCount: bookInfo.pageCount || 0,
         language: 'es',
-        coverImage: '',
+        coverImage: coverImage || '',
         categories: [],
         source: 'isbnchile'
       };
