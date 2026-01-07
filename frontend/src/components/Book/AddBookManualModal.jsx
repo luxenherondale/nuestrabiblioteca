@@ -5,7 +5,8 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import Notification from '../Notification';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = import.meta.env.VITE_BASE_URL || '';
 
 const AddBookManualModal = ({ isOpen, onClose }) => {
   const { categories, loadBooks } = useLibrary();
@@ -128,7 +129,7 @@ const AddBookManualModal = ({ isOpen, onClose }) => {
         isbn: formData.isbn || `manual-${Date.now()}`
       };
 
-      const response = await fetch('http://localhost:5000/api/books/add-manual', {
+      const response = await fetch(`${API_URL}/books/add-manual`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

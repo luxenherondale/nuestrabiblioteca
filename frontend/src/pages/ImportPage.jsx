@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import './ImportPage.css';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const ImportPage = () => {
   const { token } = useAuth();

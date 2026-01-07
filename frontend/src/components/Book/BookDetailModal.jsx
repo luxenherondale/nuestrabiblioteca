@@ -4,7 +4,8 @@ import { useLibrary } from '../../contexts/LibraryContext.jsx';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = import.meta.env.VITE_BASE_URL || '';
 
 const StarRating = ({ rating, onChange, color = 'amber', readonly = false }) => {
   const [hoverRating, setHoverRating] = useState(0);
