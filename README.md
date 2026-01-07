@@ -106,7 +106,20 @@ npm run dev:server
 npm run dev:frontend
 ```
 
-### 6. Configurar usuarios iniciales
+### 6. Importar libros de ejemplo (opcional)
+
+Si deseas cargar los libros de ejemplo incluidos en el proyecto:
+
+```bash
+cd server
+npm run seed-books
+```
+
+Esto importará automáticamente todos los libros de ejemplo con sus categorías y estado de lectura.
+
+**Nota:** Los libros se importarán solo si no existen en la base de datos (se valida por ISBN).
+
+### 7. Configurar usuarios iniciales
 
 La primera vez que ejecutes la aplicación, necesitas crear los usuarios. Haz una petición POST a:
 
@@ -196,6 +209,218 @@ nuestrabiblioteca/
 - `GET /api/stats/reading-by-month` - Lecturas por mes
 - `GET /api/stats/by-category` - Libros por categoría
 - `GET /api/stats/by-location` - Libros por ubicación
+
+## 💾 Gestión de datos de libros
+
+### Exportar libros actuales
+
+Si deseas guardar los libros actuales de tu biblioteca para compartir o respaldar:
+
+```bash
+cd server
+npm run export-books
+```
+
+Esto creará un archivo `server/data/booksExample.json` con todos tus libros actuales.
+
+### Importar libros desde el archivo
+
+Para importar los libros guardados en otra instancia:
+
+```bash
+cd server
+npm run seed-books
+```
+
+**Flujo completo:**
+1. En tu instancia actual: `npm run export-books` → genera `booksExample.json`
+2. Copia el archivo a otra instancia
+3. En la nueva instancia: `npm run seed-books` → importa todos los libros
+
+## 🌐 Página Pública
+
+La aplicación incluye una página pública sin autenticación donde cualquiera puede buscar los libros disponibles:
+
+**URL:** `/biblioteca-publica`
+
+**Características:**
+- Buscador en tiempo real por título, autor o ISBN
+- Libros organizados por categorías
+- Muestra portadas e información básica
+- Completamente responsive
+- Sin necesidad de login
+
+**Para compartir con otros:**
+```
+https://tudominio.com/biblioteca-publica
+```
+
+## 🚀 Desplegar en un Servidor
+
+### Preparación previa
+
+1. **Exporta tus libros actuales** (si quieres mantenerlos):
+```bash
+cd server
+npm run export-books
+```
+
+2. **Commit y push a GitHub:**
+```bash
+git add -A
+git commit -m "Versión lista para producción"
+git push origin main
+```
+
+### Opción 1: Desplegar en Heroku
+
+1. **Instala Heroku CLI** desde https://devcenter.heroku.com/articles/heroku-cli
+
+2. **Crea una aplicación en Heroku:**
+```bash
+heroku login
+heroku create tu-app-name
+```
+
+3. **Configura variables de entorno:**
+```bash
+heroku config:set JWT_SECRET="tu-clave-secreta-segura"
+heroku config:set MONGODB_URI="tu-mongodb-atlas-uri"
+```
+
+4. **Crea un archivo `Procfile` en la raíz:**
+```
+web: npm run build:all && npm run start:server
+```
+
+5. **Deploy:**
+```bash
+git push heroku main
+```
+
+### Opción 2: Desplegar en VPS (DigitalOcean, Linode, AWS, etc.)
+
+1. **Conecta por SSH a tu servidor:**
+```bash
+ssh root@tu-ip-servidor
+```
+
+2. **Instala Node.js y npm:**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+3. **Instala MongoDB (o usa MongoDB Atlas en la nube):**
+```bash
+# Opción: usar MongoDB Atlas (recomendado)
+# Crea una cuenta en https://www.mongodb.com/cloud/atlas
+```
+
+4. **Clona el repositorio:**
+```bash
+git clone git@github.com:luxenherondale/nuestrabiblioteca.git
+cd nuestrabiblioteca
+```
+
+5. **Instala dependencias:**
+```bash
+npm run install:all
+```
+
+6. **Configura variables de entorno:**
+```bash
+cd server
+cp .env.example .env
+# Edita .env con tus valores
+nano .env
+```
+
+7. **Importa los libros (opcional):**
+```bash
+npm run seed-books
+```
+
+8. **Instala PM2 para mantener la app corriendo:**
+```bash
+sudo npm install -g pm2
+```
+
+9. **Inicia la aplicación con PM2:**
+```bash
+pm2 start "npm run dev:server" --name "biblioteca-backend"
+pm2 start "npm run dev:frontend" --name "biblioteca-frontend"
+pm2 save
+pm2 startup
+```
+
+10. **Configura Nginx como reverse proxy:**
+```bash
+sudo apt-get install nginx
+# Edita /etc/nginx/sites-available/default
+# Configura para que apunte a localhost:5173 (frontend) y localhost:5000 (API)
+```
+
+### Opción 3: Desplegar con Docker
+
+1. **Crea un `Dockerfile` en la raíz:**
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+RUN cd frontend && npm install && npm run build
+RUN cd server && npm install
+
+EXPOSE 5000 5173
+
+CMD ["npm", "run", "dev:server"]
+```
+
+2. **Construye la imagen:**
+```bash
+docker build -t nuestrabiblioteca .
+```
+
+3. **Ejecuta el contenedor:**
+```bash
+docker run -p 5000:5000 -p 5173:5173 \
+  -e JWT_SECRET="tu-clave" \
+  -e MONGODB_URI="tu-mongodb-uri" \
+  nuestrabiblioteca
+```
+
+### Configuración de dominio
+
+1. **Apunta tu dominio al servidor** en tu proveedor de DNS
+2. **Configura SSL con Let's Encrypt:**
+```bash
+sudo apt-get install certbot python3-certbot-nginx
+sudo certbot certonly --nginx -d tudominio.com
+```
+
+3. **Actualiza Nginx con SSL:**
+```bash
+sudo nano /etc/nginx/sites-available/default
+# Agrega configuración SSL
+sudo systemctl restart nginx
+```
+
+## 📋 Checklist antes de desplegar
+
+- [ ] Exportaste los libros: `npm run export-books`
+- [ ] Configuraste variables de entorno (JWT_SECRET, MONGODB_URI)
+- [ ] Instalaste Playwright: `npx playwright install chromium`
+- [ ] Probaste localmente: `npm run dev:server` y `npm run dev:frontend`
+- [ ] Hiciste commit y push a GitHub
+- [ ] Configuraste MongoDB (Atlas o local)
+- [ ] Configuraste dominio y DNS
+- [ ] Configuraste SSL (HTTPS)
 
 ## 🔍 Fuentes de datos para ISBN
 

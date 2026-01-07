@@ -9,6 +9,7 @@ const statsRoutes = require('./routes/stats');
 const authRoutes = require('./routes/auth');
 const uploadRoutes = require('./routes/upload');
 const importRoutes = require('./routes/import');
+const publicRoutes = require('./routes/public');
 const { authMiddleware } = require('./middleware/auth');
 
 dotenv.config();
@@ -26,6 +27,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/nuestrabi
 
 app.use('/api/auth', authRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/public', publicRoutes);
 app.use('/api/books', authMiddleware, bookRoutes);
 app.use('/api/categories', authMiddleware, categoryRoutes);
 app.use('/api/stats', authMiddleware, statsRoutes);

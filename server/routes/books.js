@@ -3,6 +3,16 @@ const router = express.Router();
 const Book = require('../models/Book');
 const bookService = require('../services/bookService');
 
+// Endpoint público - obtener todos los libros sin autenticación
+router.get('/public/all', async (req, res) => {
+  try {
+    const books = await Book.find().populate('categories').sort({ title: 1 });
+    res.json(books);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
     const { category, location, search } = req.query;

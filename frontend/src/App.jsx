@@ -10,6 +10,7 @@ import StatisticsPage from './pages/StatisticsPage';
 import LoginPage from './pages/LoginPage';
 import SettingsPage from './pages/SettingsPage';
 import ImportPage from './pages/ImportPage';
+import PublicPage from './pages/PublicPage';
 import './App.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -54,6 +55,7 @@ function AppContent() {
   return (
     <Router>
       <Routes>
+        <Route path="/biblioteca-publica" element={<PublicPage />} />
         <Route path="/login" element={
           <PublicRoute>
             <LoginPage />

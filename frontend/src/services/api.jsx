@@ -31,6 +31,8 @@ api.interceptors.response.use(
 );
 
 export const booksAPI = {
+  getPublic: () => axios.get(`${API_BASE_URL}/public/books`),
+  
   getAll: (filters = {}) => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
