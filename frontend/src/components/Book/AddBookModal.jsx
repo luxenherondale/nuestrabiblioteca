@@ -46,8 +46,8 @@ const AddBookModal = ({ isOpen, onClose }) => {
       const response = await booksAPI.searchByISBN(isbn.trim());
       const bookData = response.data;
       
-      // Si no tiene portada (viene de ISBN Chile), mostrar preview para agregar URL
-      if (!bookData.coverImage || bookData.source === 'isbnchile') {
+      // Si no tiene portada, mostrar preview para agregar URL
+      if (!bookData.coverImage) {
         setPreviewBook(bookData);
         setCoverUrl('');
       } else {
