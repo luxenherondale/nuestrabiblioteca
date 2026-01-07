@@ -81,7 +81,7 @@ const SettingsPage = () => {
     
     setUploadingAvatar(true);
     try {
-      const response = await axios.post(`${API_URL}/api/upload/avatar`, formData, {
+      const response = await axios.post(`${API_URL}/upload/avatar`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`
