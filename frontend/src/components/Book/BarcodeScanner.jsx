@@ -138,7 +138,7 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal max-w-2xl w-full">
+      <div className="modal" style={{ maxWidth: 'min(600px, calc(100% - 2rem))' }}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Escanear Código de Barras</h2>
           <button onClick={handleClose} className="btn btn-outline">
@@ -161,8 +161,13 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
         <div className="space-y-4">
           <div 
             ref={scannerContainerRef}
-            className="relative bg-black rounded-lg overflow-hidden"
-            style={{ aspectRatio: '4/3', minHeight: '300px' }}
+            className="relative bg-black rounded-lg overflow-hidden w-full"
+            style={{ 
+              width: '100%',
+              aspectRatio: '4/3',
+              minHeight: 'clamp(200px, 60vw, 400px)',
+              maxWidth: '100%'
+            }}
           >
             {!scanning && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-900">

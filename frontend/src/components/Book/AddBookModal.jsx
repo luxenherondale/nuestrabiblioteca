@@ -152,7 +152,7 @@ const AddBookModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal max-w-2xl w-full">
+      <div className="modal" style={{ maxWidth: 'min(600px, calc(100% - 2rem))' }}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Agregar Nuevo Libro</h2>
           <button onClick={onClose} className="btn btn-outline">
