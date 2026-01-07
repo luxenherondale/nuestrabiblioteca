@@ -4,26 +4,39 @@ const { chromium } = require('playwright');
 class BookService {
   // Intenta Google Books primero, luego Open Library, luego ISBN Chile como respaldo
   async getBookInfoByISBN(isbn) {
+    const errors = [];
+    
+    // Primero intentar con Google Books
     try {
-      // Primero intentar con Google Books
       const googleResult = await this.getFromGoogleBooks(isbn);
       if (googleResult) return googleResult;
-      
-      // Si no encuentra, intentar con Open Library
+    } catch (error) {
+      console.log('Google Books error:', error.message);
+      errors.push(`Google Books: ${error.message}`);
+    }
+    
+    // Si no encuentra, intentar con Open Library
+    try {
       const openLibraryResult = await this.getFromOpenLibrary(isbn);
       if (openLibraryResult) return openLibraryResult;
-      
-      // Último recurso: ISBN Chile (scraping)
+    } catch (error) {
+      console.log('Open Library error:', error.message);
+      errors.push(`Open Library: ${error.message}`);
+    }
+    
+    // Último recurso: ISBN Chile (scraping)
+    try {
       console.log('Intentando con ISBN Chile...');
       const isbnChileResult = await this.getFromISBNChile(isbn);
       if (isbnChileResult) return isbnChileResult;
-      
-      throw new Error('Libro no encontrado');
     } catch (error) {
-      if (error.message === 'Libro no encontrado') throw error;
-      console.error('Error obteniendo información del libro:', error);
-      throw new Error('Libro no encontrado');
+      console.log('ISBN Chile error:', error.message);
+      errors.push(`ISBN Chile: ${error.message}`);
     }
+    
+    // Si ninguna fuente encontró el libro
+    console.log('Libro no encontrado en ninguna fuente. Errores:', errors);
+    throw new Error('Libro no encontrado');
   }
 
   async getFromGoogleBooks(isbn) {
@@ -187,7 +200,17 @@ class BookService {
         const materiaMatch = bodyText.match(/Materia[:\s]+([^\n]+)/i);
         const genre = materiaMatch ? materiaMatch[1].trim() : '';
         
-        return { title, author, publisher, description, pageCount, isbn: foundIsbn, publishDate, genre };
+        // Imagen de portada - buscar en div.col-md-5
+        let coverImage = '';
+        const imageContainer = document.querySelector('div.col-md-5');
+        if (imageContainer) {
+          const img = imageContainer.querySelector('img');
+          if (img && img.src) {
+            coverImage = img.src;
+          }
+        }
+        
+        return { title, author, publisher, description, pageCount, isbn: foundIsbn, publishDate, genre, coverImage };
       });
       
       await browser.close();
@@ -205,7 +228,7 @@ class BookService {
         description: bookInfo.description || '',
         pageCount: bookInfo.pageCount || 0,
         language: 'es',
-        coverImage: '',
+        coverImage: bookInfo.coverImage || '',
         categories: [],
         source: 'isbnchile'
       };
