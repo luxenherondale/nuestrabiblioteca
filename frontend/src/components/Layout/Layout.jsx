@@ -144,7 +144,7 @@ const Layout = ({ children }) => {
         {/* Footer */}
         <footer className="bg-gray-800/80 backdrop-blur-md border-t border-gray-700 py-4 px-6 md:px-8">
           <div className="text-center text-sm text-gray-400">
-            © 2024 Nuestra Biblioteca - Hecho con ❤️ por Adaly & Sebastián
+            © 2026 Nuestra Biblioteca - Hecho con ❤️ por Adaly & Sebastián
           </div>
         </footer>
       </div>
