@@ -5,6 +5,7 @@ import { LibraryProvider } from './contexts/LibraryContext.jsx';
 import Layout from './components/Layout/Layout';
 import HomePage from './pages/HomePage';
 import LibraryPage from './pages/LibraryPage';
+import CategoryPage from './pages/CategoryPage';
 import StatisticsPage from './pages/StatisticsPage';
 import LoginPage from './pages/LoginPage';
 import SettingsPage from './pages/SettingsPage';
@@ -65,6 +66,7 @@ function AppContent() {
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/biblioteca" element={<LibraryPage />} />
+                  <Route path="/categoria/:categoryName" element={<CategoryPage />} />
                   <Route path="/estadisticas" element={<StatisticsPage />} />
                   <Route path="/importacion" element={<ImportPage />} />
                   <Route path="/configuracion" element={<SettingsPage />} />

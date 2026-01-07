@@ -351,7 +351,7 @@
 
 .library-books-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
 }
 
@@ -375,13 +375,7 @@
 
 @media (min-width: 1281px) {
   .library-books-grid {
-    grid-template-columns: repeat(6, 1fr);
-  }
-}
-
-@media (min-width: 1536px) {
-  .library-books-grid {
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 

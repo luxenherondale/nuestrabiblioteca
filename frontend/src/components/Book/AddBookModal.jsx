@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { X, Search, Plus, BookOpen, Image, Link } from 'lucide-react';
+import { X, Search, Plus, BookOpen, Image, Link, Barcode } from 'lucide-react';
 import { booksAPI } from '../../services/api.jsx';
 import { useLibrary } from '../../contexts/LibraryContext.jsx';
 import Notification from '../Notification';
+import BarcodeScanner from './BarcodeScanner';
 
 const AddBookModal = ({ isOpen, onClose }) => {
   const { addBook } = useLibrary();
@@ -16,8 +17,18 @@ const AddBookModal = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('isbn');
   const [previewBook, setPreviewBook] = useState(null);
   const [coverUrl, setCoverUrl] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleBarcodeDetected = (barcode) => {
+    setIsbn(barcode);
+    setShowScanner(false);
+    // Buscar automáticamente después de detectar
+    setTimeout(() => {
+      handleSearchByISBN();
+    }, 300);
+  };
 
   const handleSearchByISBN = async () => {
     if (!isbn.trim()) {
@@ -198,17 +209,27 @@ const AddBookModal = ({ isOpen, onClose }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     ISBN del Libro
                   </label>
-                  <input
-                    type="text"
-                    value={isbn}
-                    onChange={(e) => setIsbn(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Ej: 978-3-16-148410-0"
-                    className="input"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={isbn}
+                      onChange={(e) => setIsbn(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Ej: 978-3-16-148410-0"
+                      className="input flex-1"
+                    />
+                    <button
+                      onClick={() => setShowScanner(true)}
+                      className="btn btn-primary flex items-center gap-2"
+                      title="Escanear código de barras con la cámara"
+                    >
+                      <Barcode className="w-4 h-4" />
+                      <span className="hidden sm:inline">Escanear</span>
+                    </button>
+                  </div>
                   <p className="text-sm text-gray-500 mt-2">
-                    Ingresa el ISBN de 10 o 13 dígitos. Buscamos en Google Books, 
-                    Open Library e ISBN Chile.
+                    Ingresa el ISBN de 10 o 13 dígitos o escanea el código de barras. 
+                    Buscamos en Google Books, Open Library e ISBN Chile.
                   </p>
                 </div>
 
@@ -389,6 +410,12 @@ const AddBookModal = ({ isOpen, onClose }) => {
           </div>
         )}
       </div>
+
+      <BarcodeScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onBarcodeDetected={handleBarcodeDetected}
+      />
     </div>
   );
 };

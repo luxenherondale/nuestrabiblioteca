@@ -135,15 +135,15 @@ router.post('/preview', upload.single('file'), async (req, res) => {
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       
-      // Mapear columnas del Excel del usuario
-      const title = row['TITULO DEL LIBRO'] || row['TITULO'] || row['Titulo del libro'] || row['Titulo'] || '';
-      const author = row['AUTOR'] || row['Autor'] || '';
+      // Mapear columnas del Excel del usuario y convertir a strings
+      const title = String(row['TITULO DEL LIBRO'] || row['TITULO'] || row['Titulo del libro'] || row['Titulo'] || '').trim();
+      const author = String(row['AUTOR'] || row['Autor'] || '').trim();
       const leidoSebastian = row['LEIDO POR SEBASTIAN'] || row['Leido por Sebastian'] || '';
       const leidoAdaly = row['LEIDO POR ADALY'] || row['Leido por Adaly'] || '';
       const sinTerminarSebastian = row['SIN TERMINAR POR SEBASTIAN'] || row['Sin terminar por Sebastian'] || '';
       const sinTerminarAdaly = row['SIN TERMINAR POR ADALY'] || row['Sin terminar por Adaly'] || '';
 
-      if (!title.trim()) {
+      if (!title) {
         results.notFound.push({
           row: i + 2,
           title: '(vacío)',
@@ -156,10 +156,10 @@ router.post('/preview', upload.single('file'), async (req, res) => {
       // Verificar si ya existe en la base de datos
       const existingBook = await Book.findOne({
         $or: [
-          { title: { $regex: `^${title.trim()}$`, $options: 'i' } },
+          { title: { $regex: `^${title}$`, $options: 'i' } },
           { 
-            title: { $regex: title.trim().substring(0, 20), $options: 'i' },
-            author: { $regex: author.trim().split(' ')[0], $options: 'i' }
+            title: { $regex: title.substring(0, 20), $options: 'i' },
+            author: { $regex: author.split(' ')[0], $options: 'i' }
           }
         ]
       });
@@ -167,8 +167,8 @@ router.post('/preview', upload.single('file'), async (req, res) => {
       if (existingBook) {
         results.alreadyExists.push({
           row: i + 2,
-          title: title.trim(),
-          author: author.trim(),
+          title: title,
+          author: author,
           existingTitle: existingBook.title,
           existingAuthor: existingBook.author
         });
@@ -176,13 +176,13 @@ router.post('/preview', upload.single('file'), async (req, res) => {
       }
 
       // Buscar en APIs externas
-      const searchResult = await searchBookByTitleAndAuthor(title.trim(), author.trim());
+      const searchResult = await searchBookByTitleAndAuthor(title, author);
 
       if (!searchResult.found) {
         results.notFound.push({
           row: i + 2,
-          title: title.trim(),
-          author: author.trim(),
+          title: title,
+          author: author,
           reason: searchResult.reason
         });
         continue;
@@ -215,15 +215,15 @@ router.post('/preview', upload.single('file'), async (req, res) => {
           row: i + 2,
           title: bookData.title,
           author: bookData.author,
-          originalTitle: title.trim(),
-          originalAuthor: author.trim()
+          originalTitle: title,
+          originalAuthor: author
         });
       }
 
       results.toImport.push({
         row: i + 2,
-        originalTitle: title.trim(),
-        originalAuthor: author.trim(),
+        originalTitle: title,
+        originalAuthor: author,
         bookData,
         hasImage: !!bookData.coverImage
       });

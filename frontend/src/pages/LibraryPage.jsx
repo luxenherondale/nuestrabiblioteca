@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Plus, Filter, X, Eye, Edit, Trash2, BookOpen, MapPin, Tag, Check, XCircle } from 'lucide-react';
+import { Search, Plus, Filter, X, Eye, Edit, Trash2, BookOpen, MapPin, Tag, Check, XCircle, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useLibrary } from '../contexts/LibraryContext.jsx';
 import BookCard from '../components/Book/BookCard';
 import BookDetailModal from '../components/Book/BookDetailModal';
@@ -9,6 +10,7 @@ import FilterPanel from '../components/Book/FilterPanel';
 import './LibraryPage.css';
 
 const LibraryPage = () => {
+  const navigate = useNavigate();
   const {
     books,
     categories,
@@ -251,33 +253,52 @@ const LibraryPage = () => {
         </div>
       ) : (
         <div className="space-y-8">
-          {Object.entries(groupedBooks).map(([category, categoryBooks]) => (
-            <div key={category}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
-                  <Tag className="w-5 h-5 text-white" />
+          {Object.entries(groupedBooks).map(([category, categoryBooks]) => {
+            const BOOKS_PER_PAGE = 10;
+            const displayedBooks = categoryBooks.slice(0, BOOKS_PER_PAGE);
+            const hasMore = categoryBooks.length > BOOKS_PER_PAGE;
+            
+            return (
+              <div key={category}>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                      <Tag className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">
+                        {category}
+                      </h2>
+                      <p className="text-sm text-gray-400">
+                        {categoryBooks.length} {categoryBooks.length === 1 ? 'libro' : 'libros'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">
-                    {category}
-                  </h2>
-                  <p className="text-sm text-gray-400">
-                    {categoryBooks.length} {categoryBooks.length === 1 ? 'libro' : 'libros'}
-                  </p>
+                <div className="library-books-grid">
+                  {displayedBooks.map(book => (
+                    <BookCard
+                      key={book._id}
+                      book={book}
+                      onSelect={() => selectBook(book)}
+                      onDelete={() => handleDeleteBook(book._id)}
+                    />
+                  ))}
                 </div>
+                {hasMore && (
+                  <div className="flex justify-center mt-6">
+                    <button
+                      onClick={() => navigate(`/categoria/${category}`, { state: { categoryBooks } })}
+                      className="btn btn-primary flex items-center gap-2"
+                    >
+                      Ver más ({categoryBooks.length - BOOKS_PER_PAGE} más)
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
-              <div className="library-books-grid">
-                {categoryBooks.map(book => (
-                  <BookCard
-                    key={book._id}
-                    book={book}
-                    onSelect={() => selectBook(book)}
-                    onDelete={() => handleDeleteBook(book._id)}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
