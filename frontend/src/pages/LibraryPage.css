@@ -431,8 +431,16 @@
   }
 }
 
+/* Pantallas pequeñas (~506px) */
+@media (max-width: 520px) {
+  .library-books-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
 /* Móviles pequeños (Samsung S23/S25 Ultra ~384-412px) */
-@media (max-width: 480px) {
+@media (max-width: 400px) {
   .library-controls-container {
     gap: 0.75rem;
   }
