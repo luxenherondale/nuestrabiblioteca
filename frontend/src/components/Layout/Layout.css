@@ -17,30 +17,63 @@
 
 .content-wrapper {
   width: 100%;
-  max-width: 1440px;
+  max-width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
 }
 
- .mobile-topbar {
-   display: none;
- }
+.mobile-topbar {
+  display: none;
+}
 
- @media (max-width: 768px) {
-   .mobile-topbar {
-     display: flex;
-     align-items: center;
-     gap: 0.75rem;
-     position: sticky;
-     top: 0;
-     z-index: 20;
-     padding: 0.75rem 1rem;
-     margin: -1.5rem -1.5rem 1rem;
-     background: linear-gradient(135deg, rgba(49, 46, 129, 0.9) 0%, rgba(30, 27, 75, 0.95) 100%);
-     backdrop-filter: blur(12px);
-     border-bottom: 1px solid rgba(167, 139, 250, 0.2);
-   }
- }
+@media (max-width: 768px) {
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 0.75rem 1rem;
+    margin: -1.5rem -1.5rem 1rem;
+    background: linear-gradient(135deg, rgba(49, 46, 129, 0.9) 0%, rgba(30, 27, 75, 0.95) 100%);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(167, 139, 250, 0.2);
+  }
+}
+
+/* Main layout container responsive */
+main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+main > div {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+  main > div {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  main > div {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  main > div {
+    padding: 0.75rem;
+  }
+}
 
  .mobile-menu-btn {
    display: inline-flex;

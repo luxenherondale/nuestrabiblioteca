@@ -1,10 +1,10 @@
 /* Book Detail Modal - Pastel Theme */
 .book-detail-modal {
   background: linear-gradient(145deg, #fef7f0 0%, #fdf2f8 50%, #f0f9ff 100%);
-  border-radius: 1.5rem;
-  padding: 2rem;
+  border-radius: clamp(1rem, 2vw, 1.5rem);
+  padding: clamp(1rem, 4vw, 2rem);
   width: 100%;
-  max-width: min(800px, calc(100% - 2rem));
+  max-width: min(90vw, 900px);
   max-height: min(90dvh, calc(100dvh - 2rem));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -17,23 +17,18 @@
 .book-detail-header {
   display: flex;
   align-items: flex-start;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
+  gap: clamp(1rem, 3vw, 1.5rem);
+  margin-bottom: clamp(1rem, 3vw, 1.5rem);
+  padding-bottom: clamp(1rem, 3vw, 1.5rem);
   border-bottom: 1px solid rgba(219, 182, 206, 0.3);
 }
 
 @media (max-width: 640px) {
-  .book-detail-modal {
-    padding: 1.25rem;
-    border-radius: 1rem;
-  }
-
   .book-detail-header {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 1rem;
+    gap: clamp(0.75rem, 2vw, 1rem);
   }
 }
 
@@ -84,9 +79,9 @@
 
 .book-detail-meta {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(120px, 30vw, 150px), 1fr));
+  gap: clamp(0.75rem, 2vw, 1rem);
+  margin-bottom: clamp(1rem, 3vw, 1.5rem);
 }
 
 .book-detail-meta-item {
@@ -110,13 +105,13 @@
 }
 
 .book-detail-description {
-  margin-bottom: 2rem;
+  margin-bottom: clamp(1.5rem, 4vw, 2rem);
 }
 
 .book-detail-description-title {
   font-weight: 600;
   color: #5b4a6f;
-  margin-bottom: 0.75rem;
+  margin-bottom: clamp(0.5rem, 2vw, 0.75rem);
 }
 
 .book-detail-description-text {
@@ -130,8 +125,8 @@
   background: linear-gradient(135deg, rgba(254, 215, 226, 0.3) 0%, rgba(199, 210, 254, 0.3) 100%);
   border: 1px solid rgba(199, 146, 234, 0.2);
   border-radius: 1rem;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  margin-bottom: clamp(1.5rem, 4vw, 2rem);
 }
 
 .book-detail-reading-title {
@@ -210,19 +205,19 @@
 
 /* Categories Section */
 .book-detail-categories {
-  margin-bottom: 2rem;
+  margin-bottom: clamp(1.5rem, 4vw, 2rem);
 }
 
 .book-detail-categories-title {
   font-weight: 600;
   color: #5b4a6f;
-  margin-bottom: 1rem;
+  margin-bottom: clamp(0.75rem, 2vw, 1rem);
 }
 
 .book-detail-categories-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: clamp(0.375rem, 1.5vw, 0.5rem);
 }
 
 .book-detail-category-badge {
@@ -239,19 +234,21 @@
 /* Action Buttons */
 .book-detail-actions {
   display: flex;
-  gap: 1rem;
+  gap: clamp(0.75rem, 2vw, 1rem);
   justify-content: flex-end;
-  padding-top: 1rem;
+  padding-top: clamp(0.75rem, 2vw, 1rem);
   border-top: 1px solid rgba(219, 182, 206, 0.3);
+  flex-wrap: wrap;
 }
 
 .book-detail-btn {
-  padding: 0.75rem 1.5rem;
+  padding: clamp(0.5rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem);
   border: none;
   border-radius: 0.75rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-size: clamp(0.8rem, 2vw, 0.9rem);
 }
 
 .book-detail-btn.save {
