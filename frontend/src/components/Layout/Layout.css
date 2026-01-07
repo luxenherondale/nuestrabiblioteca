@@ -42,38 +42,6 @@
   }
 }
 
-/* Main layout container responsive */
-main {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-main > div {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  padding: 1.5rem;
-  box-sizing: border-box;
-}
-
-@media (min-width: 1024px) {
-  main > div {
-    padding: 2rem;
-  }
-}
-
-@media (max-width: 768px) {
-  main > div {
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  main > div {
-    padding: 0.75rem;
-  }
-}
 
  .mobile-menu-btn {
    display: inline-flex;
