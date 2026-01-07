@@ -257,8 +257,8 @@ const AddBookModal = ({ isOpen, onClose }) => {
                   <h3 className="font-semibold text-gray-900 mb-3">Libro encontrado</h3>
                   <div className="flex gap-4">
                     <div className="w-24 h-32 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                      {coverUrl ? (
-                        <img src={coverUrl} alt="Preview" className="w-full h-full object-cover rounded" onError={(e) => e.target.style.display = 'none'} />
+                      {(coverUrl || previewBook.coverImage) ? (
+                        <img src={coverUrl || previewBook.coverImage} alt="Preview" className="w-full h-full object-cover rounded" onError={(e) => e.target.style.display = 'none'} />
                       ) : (
                         <div className="text-center text-gray-400">
                           <Image className="w-8 h-8 mx-auto mb-1" />
