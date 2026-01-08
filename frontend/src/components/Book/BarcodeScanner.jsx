@@ -91,26 +91,18 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
                  label.includes('facing back') || label.includes('environment');
         });
         
-        // En Samsung S23: "camera2 0" es ultra wide, "camera2 1" es principal, "camera2 2" es telefoto
-        // Buscar por orden: evitar "0" (ultra wide), preferir "1" (principal)
+        // En Samsung S23: "camera 0, facing back" es la principal, "camera 2, facing back" es ultra wide
+        // Preferir la cámara con número más BAJO entre las traseras (usualmente la principal)
         if (backCameras.length > 0) {
-          // Prioridad 1: Buscar explícitamente la cámara principal (no ultra wide)
-          const mainCamera = backCameras.find(d => {
-            const label = d.label.toLowerCase();
-            // Evitar ultra wide
-            if (label.includes('ultra') || label.includes('wide') || label.includes('0.5')) return false;
-            // Preferir la principal
-            return label.includes('camera2 1') || label.includes('back camera 1') || 
-                   label.includes('main') || label.includes('principal');
-          }) || backCameras.find(d => {
-            const label = d.label.toLowerCase();
-            // Si no encontramos "main", evitar las que claramente son ultra wide
-            return !label.includes('ultra') && !label.includes('wide') && 
-                   !label.includes('0.5') && !label.includes('camera2 0');
-          }) || backCameras.find(d => {
-            // Última opción: la que tenga "1" en el nombre (usualmente la principal)
-            return d.label.includes('1');
+          // Ordenar por número de cámara (extraer el número del label)
+          const sortedBackCameras = [...backCameras].sort((a, b) => {
+            const numA = parseInt(a.label.match(/camera\s*(\d+)/i)?.[1] || '99');
+            const numB = parseInt(b.label.match(/camera\s*(\d+)/i)?.[1] || '99');
+            return numA - numB; // Menor número primero
           });
+          
+          // La primera cámara trasera ordenada por número es usualmente la principal
+          const mainCamera = sortedBackCameras[0];
           
           if (mainCamera) {
             selectedDeviceId = mainCamera.deviceId;
