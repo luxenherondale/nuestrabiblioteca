@@ -97,11 +97,17 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
 
         const videoConstraints = {
           video: selectedDeviceId 
-            ? { deviceId: { exact: selectedDeviceId } }
+            ? { 
+                deviceId: { exact: selectedDeviceId },
+                width: { ideal: 1920, min: 1280 },
+                height: { ideal: 1080, min: 720 },
+                advanced: [{ zoom: 1.0 }]
+              }
             : {
-                facingMode: { ideal: 'environment' },
-                width: { ideal: isMobile ? 640 : 1280 },
-                height: { ideal: isMobile ? 480 : 720 }
+                facingMode: { exact: 'environment' },
+                width: { ideal: 1920, min: 1280 },
+                height: { ideal: 1080, min: 720 },
+                advanced: [{ zoom: 1.0 }]
               },
           audio: false
         };
@@ -122,11 +128,15 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
             type: 'LiveStream',
             target: scannerContainerRef.current,
             constraints: selectedDeviceId
-              ? { deviceId: { exact: selectedDeviceId } }
+              ? { 
+                  deviceId: { exact: selectedDeviceId },
+                  width: { ideal: 1920, min: 1280 },
+                  height: { ideal: 1080, min: 720 }
+                }
               : {
                   facingMode: 'environment',
-                  width: { ideal: isMobile ? 640 : 1280 },
-                  height: { ideal: isMobile ? 480 : 720 }
+                  width: { ideal: 1920, min: 1280 },
+                  height: { ideal: 1080, min: 720 }
                 },
             area: {
               top: '10%',
@@ -314,20 +324,29 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
                 <div 
                   className="absolute inset-0 pointer-events-none z-20"
                   style={{
-                    border: '2px solid rgba(139, 92, 246, 0.5)',
-                    borderRadius: '0.5rem'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
                   <div style={{
-                    position: 'absolute',
-                    top: '30%',
-                    left: '10%',
-                    right: '10%',
-                    height: '40%',
-                    border: '2px solid #a78bfa',
-                    borderRadius: '4px',
-                    background: 'rgba(167, 139, 250, 0.1)'
-                  }} />
+                    width: '80%',
+                    height: '30%',
+                    border: '3px solid #a78bfa',
+                    borderRadius: '8px',
+                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
+                  }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '60%',
+                      height: '2px',
+                      background: 'linear-gradient(90deg, transparent, #a78bfa, transparent)',
+                      animation: 'scan 2s ease-in-out infinite'
+                    }} />
+                  </div>
                 </div>
               </div>
 
