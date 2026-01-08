@@ -12,7 +12,6 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
   const [permissionStatus, setPermissionStatus] = useState('pending');
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualIsbn, setManualIsbn] = useState('');
-  const [debugInfo, setDebugInfo] = useState('');
   const isInitialized = useRef(false);
 
   const stopCamera = useCallback(() => {
@@ -75,9 +74,7 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(d => d.kind === 'videoinput');
         
-        const cameraList = videoDevices.map(d => d.label || 'Sin nombre').join(' | ');
-        console.log('📷 Cámaras disponibles:', cameraList);
-        setDebugInfo(`Cámaras: ${cameraList}`);
+        console.log('📷 Cámaras disponibles:', videoDevices.map(d => d.label));
         
         // Buscar la cámara principal (NO ultra wide, NO frontal)
         let selectedDeviceId = null;
@@ -107,7 +104,6 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
           if (mainCamera) {
             selectedDeviceId = mainCamera.deviceId;
             console.log('✅ Cámara principal seleccionada:', mainCamera.label);
-            setDebugInfo(prev => prev + ` | USANDO: ${mainCamera.label}`);
           }
         }
         
@@ -367,12 +363,6 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
                   </div>
                 </div>
               </div>
-
-              {debugInfo && (
-                <div className="p-2 bg-gray-800 rounded text-xs text-green-400 font-mono overflow-x-auto">
-                  {debugInfo}
-                </div>
-              )}
 
               <div className="text-center">
                 <button
