@@ -82,23 +82,23 @@ const CategorySelector = ({ selectedCategories, allCategories, onChange }) => {
 
   return (
     <div className="space-y-3">
-      {/* Select nativo multi-selección */}
-      <select
-        multiple
-        value={selectedCategories}
-        onChange={(e) => {
-          const selected = Array.from(e.target.selectedOptions, option => option.value);
-          onChange(selected);
-        }}
-        className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-violet-500 focus:ring-violet-500 bg-white dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400"
-        size={Math.min(allCategories.length, 6)}
-      >
+      {/* Lista de checkboxes para selección múltiple */}
+      <div className="py-2 px-3 border border-gray-200 rounded-lg bg-white dark:bg-neutral-900 dark:border-neutral-700 max-h-48 overflow-y-auto">
         {allCategories.map(cat => (
-          <option key={cat._id} value={cat._id}>
-            {cat.name}
-          </option>
+          <label
+            key={cat._id}
+            className="flex items-center gap-3 py-2 px-2 hover:bg-gray-50 dark:hover:bg-neutral-800 rounded cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              checked={selectedCategories.includes(cat._id)}
+              onChange={() => handleToggleCategory(cat._id)}
+              className="w-4 h-4 text-violet-600 border-gray-300 rounded focus:ring-violet-500"
+            />
+            <span className="text-sm text-gray-700 dark:text-neutral-400">{cat.name}</span>
+          </label>
         ))}
-      </select>
+      </div>
       
       {/* Chips de categorías seleccionadas */}
       {selectedCategoryNames.length > 0 && (
