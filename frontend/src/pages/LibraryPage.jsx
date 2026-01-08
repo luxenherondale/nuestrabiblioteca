@@ -208,23 +208,42 @@ const LibraryPage = () => {
 
         {/* Category Quick Filters */}
         {categories.length > 0 && (
-          <div className="library-category-filters">
-          <button
-            onClick={() => setFilters({ category: '' })}
-            className={`category-filter-btn ${!filters.category ? 'active' : ''}`}
-          >
-            Todas las categorías
-          </button>
-            {categories.map(cat => (
-              <button
-                key={cat._id}
-                onClick={() => setFilters({ category: cat._id })}
-                className={`category-filter-btn ${filters.category === cat._id ? 'active' : ''}`}
+          <>
+            {/* Select dropdown para móvil */}
+            <div className="library-category-select-mobile">
+              <select
+                value={filters.category || ''}
+                onChange={(e) => setFilters({ category: e.target.value })}
+                className="category-select"
               >
-                {cat.name}
+                <option value="">Todas las categorías</option>
+                {categories.map(cat => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Badges para desktop */}
+            <div className="library-category-filters">
+              <button
+                onClick={() => setFilters({ category: '' })}
+                className={`category-filter-btn ${!filters.category ? 'active' : ''}`}
+              >
+                Todas las categorías
               </button>
-            ))}
-          </div>
+              {categories.map(cat => (
+                <button
+                  key={cat._id}
+                  onClick={() => setFilters({ category: cat._id })}
+                  className={`category-filter-btn ${filters.category === cat._id ? 'active' : ''}`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
