@@ -63,57 +63,78 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
       const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
       try {
-        // Intentar obtener la cámara principal (no ultra wide)
-        let selectedDeviceId = null;
+        // PASO 1: Obtener permisos primero con cualquier cámara trasera
+        // (Las etiquetas de dispositivos solo están disponibles DESPUÉS de obtener permisos)
+        let initialStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+          audio: false
+        });
         
-        try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const videoDevices = devices.filter(d => d.kind === 'videoinput');
-          
-          // Buscar cámara trasera que NO sea ultra wide
-          // Prioridad: "back camera" > "rear" > "main" > primera sin "ultra"/"wide angle"
-          const backCameras = videoDevices.filter(d => {
+        // PASO 2: Ahora que tenemos permisos, enumerar dispositivos con etiquetas
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(d => d.kind === 'videoinput');
+        
+        console.log('📷 Cámaras disponibles:', videoDevices.map(d => ({
+          label: d.label,
+          deviceId: d.deviceId.substring(0, 8) + '...'
+        })));
+        
+        // Buscar la cámara principal (NO ultra wide)
+        let selectedDeviceId = null;
+        const backCameras = videoDevices.filter(d => {
+          const label = d.label.toLowerCase();
+          return label.includes('back') || label.includes('rear') || label.includes('trasera') || 
+                 label.includes('0') || label.includes('1') || label.includes('2');
+        });
+        
+        // En Samsung S23: "camera2 0" es ultra wide, "camera2 1" es principal, "camera2 2" es telefoto
+        // Buscar por orden: evitar "0" (ultra wide), preferir "1" (principal)
+        if (backCameras.length > 0) {
+          // Prioridad 1: Buscar explícitamente la cámara principal (no ultra wide)
+          const mainCamera = backCameras.find(d => {
             const label = d.label.toLowerCase();
-            return label.includes('back') || label.includes('rear') || label.includes('trasera') || 
-                   label.includes('environment') || label.includes('facing back');
+            // Evitar ultra wide
+            if (label.includes('ultra') || label.includes('wide') || label.includes('0.5')) return false;
+            // Preferir la principal
+            return label.includes('camera2 1') || label.includes('back camera 1') || 
+                   label.includes('main') || label.includes('principal');
+          }) || backCameras.find(d => {
+            const label = d.label.toLowerCase();
+            // Si no encontramos "main", evitar las que claramente son ultra wide
+            return !label.includes('ultra') && !label.includes('wide') && 
+                   !label.includes('0.5') && !label.includes('camera2 0');
+          }) || backCameras.find(d => {
+            // Última opción: la que tenga "1" en el nombre (usualmente la principal)
+            return d.label.includes('1');
           });
           
-          if (backCameras.length > 0) {
-            // Preferir la cámara principal, evitar ultra wide
-            const mainCamera = backCameras.find(d => {
-              const label = d.label.toLowerCase();
-              return !label.includes('ultra') && !label.includes('wide angle') && !label.includes('0.5x');
-            }) || backCameras.find(d => {
-              const label = d.label.toLowerCase();
-              return label.includes('main') || label.includes('principal') || label.includes('1x');
-            }) || backCameras[0];
-            
+          if (mainCamera) {
             selectedDeviceId = mainCamera.deviceId;
-            console.log('Cámara seleccionada:', mainCamera.label);
+            console.log('✅ Cámara principal seleccionada:', mainCamera.label);
           }
-        } catch (enumErr) {
-          console.log('No se pudieron enumerar dispositivos:', enumErr);
         }
-
-        const videoConstraints = {
-          video: selectedDeviceId 
-            ? { 
-                deviceId: { exact: selectedDeviceId },
-                width: { ideal: 1920, min: 1280 },
-                height: { ideal: 1080, min: 720 },
-                advanced: [{ zoom: 1.0 }]
-              }
-            : {
-                facingMode: { exact: 'environment' },
-                width: { ideal: 1920, min: 1280 },
-                height: { ideal: 1080, min: 720 },
-                advanced: [{ zoom: 1.0 }]
-              },
-          audio: false
-        };
-
-        const stream = await navigator.mediaDevices.getUserMedia(videoConstraints);
-        streamRef.current = stream;
+        
+        // PASO 3: Si encontramos una cámara mejor, reiniciar con ella
+        if (selectedDeviceId) {
+          // Detener el stream inicial
+          initialStream.getTracks().forEach(track => track.stop());
+          
+          // Obtener stream con la cámara principal específica
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: { exact: selectedDeviceId },
+              width: { ideal: 1920, min: 1280 },
+              height: { ideal: 1080, min: 720 }
+            },
+            audio: false
+          });
+          streamRef.current = stream;
+        } else {
+          // Usar el stream inicial si no encontramos una mejor opción
+          streamRef.current = initialStream;
+          console.log('⚠️ Usando cámara por defecto');
+        }
+        
         setPermissionStatus('granted');
 
         await new Promise(resolve => setTimeout(resolve, 300));
