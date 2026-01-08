@@ -51,6 +51,7 @@ const CategorySelector = ({ selectedCategories, allCategories, onChange }) => {
   const { addCategory, loadCategories } = useLibrary();
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleToggleCategory = (categoryId) => {
     if (selectedCategories.includes(categoryId)) {
@@ -76,27 +77,76 @@ const CategorySelector = ({ selectedCategories, allCategories, onChange }) => {
     }
   };
 
+  const selectedCategoryNames = allCategories
+    .filter(cat => selectedCategories.includes(cat._id))
+    .map(cat => cat.name);
+
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        {allCategories.map(cat => (
-          <button
-            key={cat._id}
-            type="button"
-            onClick={() => handleToggleCategory(cat._id)}
-            className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
-              selectedCategories.includes(cat._id)
-                ? 'bg-violet-300 text-violet-800'
-                : 'bg-pink-100 text-pink-700 hover:bg-pink-200'
-            }`}
-          >
-            {cat.name}
-            {selectedCategories.includes(cat._id) && (
-              <Check className="w-3 h-3 inline ml-1" />
-            )}
-          </button>
-        ))}
+    <div className="space-y-2">
+      {/* Dropdown selector */}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full px-4 py-2.5 text-left bg-slate-100 border border-violet-200 rounded-lg text-sm font-medium text-violet-700 hover:bg-violet-50 hover:border-violet-300 transition-all flex items-center justify-between"
+        >
+          <span className="truncate">
+            {selectedCategoryNames.length > 0 
+              ? selectedCategoryNames.join(', ')
+              : 'Seleccionar categorías...'}
+          </span>
+          <svg className={`w-4 h-4 text-violet-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        
+        {isOpen && (
+          <div className="absolute z-50 w-full mt-1 bg-white border border-violet-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            {allCategories.map(cat => (
+              <button
+                key={cat._id}
+                type="button"
+                onClick={() => handleToggleCategory(cat._id)}
+                className={`w-full px-4 py-2 text-left text-sm flex items-center justify-between hover:bg-violet-50 transition-colors ${
+                  selectedCategories.includes(cat._id)
+                    ? 'bg-violet-100 text-violet-800 font-medium'
+                    : 'text-slate-700'
+                }`}
+              >
+                {cat.name}
+                {selectedCategories.includes(cat._id) && (
+                  <Check className="w-4 h-4 text-violet-600" />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+      
+      {/* Chips de categorías seleccionadas */}
+      {selectedCategoryNames.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {allCategories
+            .filter(cat => selectedCategories.includes(cat._id))
+            .map(cat => (
+              <span
+                key={cat._id}
+                className="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-200 text-violet-800 rounded-full text-xs font-medium"
+              >
+                {cat.name}
+                <button
+                  type="button"
+                  onClick={() => handleToggleCategory(cat._id)}
+                  className="hover:text-violet-900"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+        </div>
+      )}
+      
+      {/* Agregar nueva categoría */}
       <div className="flex gap-2">
         <input
           type="text"
