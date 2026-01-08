@@ -82,62 +82,68 @@ const CategorySelector = ({ selectedCategories, allCategories, onChange }) => {
     .map(cat => cat.name);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {/* Dropdown selector */}
       <div className="relative">
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full px-4 py-2.5 text-left bg-slate-100 border border-violet-200 rounded-lg text-sm font-medium text-violet-700 hover:bg-violet-50 hover:border-violet-300 transition-all flex items-center justify-between"
+          className="w-full px-4 py-3 text-left bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200/60 rounded-xl text-sm font-medium text-violet-700 hover:from-violet-100 hover:to-purple-100 hover:border-violet-300 hover:shadow-md transition-all duration-200 flex items-center justify-between backdrop-blur-sm"
         >
-          <span className="truncate">
+          <span className="truncate flex items-center gap-2">
+            <Tag className="w-4 h-4 text-violet-400" />
             {selectedCategoryNames.length > 0 
-              ? selectedCategoryNames.join(', ')
+              ? `${selectedCategoryNames.length} categoría${selectedCategoryNames.length > 1 ? 's' : ''} seleccionada${selectedCategoryNames.length > 1 ? 's' : ''}`
               : 'Seleccionar categorías...'}
           </span>
-          <svg className={`w-4 h-4 text-violet-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className={`w-5 h-5 text-violet-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
         
         {isOpen && (
-          <div className="absolute z-50 w-full mt-1 bg-white border border-violet-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-            {allCategories.map(cat => (
-              <button
-                key={cat._id}
-                type="button"
-                onClick={() => handleToggleCategory(cat._id)}
-                className={`w-full px-4 py-2 text-left text-sm flex items-center justify-between hover:bg-violet-50 transition-colors ${
-                  selectedCategories.includes(cat._id)
-                    ? 'bg-violet-100 text-violet-800 font-medium'
-                    : 'text-slate-700'
-                }`}
-              >
-                {cat.name}
-                {selectedCategories.includes(cat._id) && (
-                  <Check className="w-4 h-4 text-violet-600" />
-                )}
-              </button>
-            ))}
+          <div className="absolute z-50 w-full mt-2 bg-white/95 backdrop-blur-md border border-violet-100 rounded-xl shadow-xl shadow-violet-500/10 max-h-56 overflow-y-auto overflow-x-hidden">
+            <div className="p-1">
+              {allCategories.map(cat => (
+                <button
+                  key={cat._id}
+                  type="button"
+                  onClick={() => handleToggleCategory(cat._id)}
+                  className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between rounded-lg transition-all duration-150 ${
+                    selectedCategories.includes(cat._id)
+                      ? 'bg-gradient-to-r from-violet-100 to-purple-100 text-violet-800 font-medium'
+                      : 'text-slate-600 hover:bg-violet-50 hover:text-violet-700'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${selectedCategories.includes(cat._id) ? 'bg-violet-500' : 'bg-slate-300'}`}></span>
+                    {cat.name}
+                  </span>
+                  {selectedCategories.includes(cat._id) && (
+                    <Check className="w-4 h-4 text-violet-500" />
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
       
       {/* Chips de categorías seleccionadas */}
       {selectedCategoryNames.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {allCategories
             .filter(cat => selectedCategories.includes(cat._id))
             .map(cat => (
               <span
                 key={cat._id}
-                className="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-200 text-violet-800 rounded-full text-xs font-medium"
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-violet-100 to-purple-100 text-violet-700 rounded-full text-xs font-medium border border-violet-200/50 shadow-sm hover:shadow transition-all duration-150"
               >
                 {cat.name}
                 <button
                   type="button"
                   onClick={() => handleToggleCategory(cat._id)}
-                  className="hover:text-violet-900"
+                  className="hover:text-violet-900 hover:bg-violet-200 rounded-full p-0.5 transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -153,14 +159,14 @@ const CategorySelector = ({ selectedCategories, allCategories, onChange }) => {
           value={newCategoryName}
           onChange={(e) => setNewCategoryName(e.target.value)}
           placeholder="Nueva categoría..."
-          className="input flex-1 text-sm"
+          className="input flex-1 text-sm rounded-lg border-violet-200 focus:border-violet-400 focus:ring-violet-300"
           onKeyDown={(e) => e.key === 'Enter' && handleAddNewCategory()}
         />
         <button
           type="button"
           onClick={handleAddNewCategory}
           disabled={isAdding || !newCategoryName.trim()}
-          className="btn btn-sm btn-primary"
+          className="btn btn-sm bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
         >
           <Plus className="w-4 h-4" />
         </button>
