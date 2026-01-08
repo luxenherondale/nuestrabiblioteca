@@ -12,6 +12,7 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
   const [permissionStatus, setPermissionStatus] = useState('pending');
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualIsbn, setManualIsbn] = useState('');
+  const [debugInfo, setDebugInfo] = useState('');
   const isInitialized = useRef(false);
 
   const stopCamera = useCallback(() => {
@@ -74,17 +75,20 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(d => d.kind === 'videoinput');
         
-        console.log('📷 Cámaras disponibles:', videoDevices.map(d => ({
-          label: d.label,
-          deviceId: d.deviceId.substring(0, 8) + '...'
-        })));
+        const cameraList = videoDevices.map(d => d.label || 'Sin nombre').join(' | ');
+        console.log('📷 Cámaras disponibles:', cameraList);
+        setDebugInfo(`Cámaras: ${cameraList}`);
         
-        // Buscar la cámara principal (NO ultra wide)
+        // Buscar la cámara principal (NO ultra wide, NO frontal)
         let selectedDeviceId = null;
         const backCameras = videoDevices.filter(d => {
           const label = d.label.toLowerCase();
+          // Excluir cámaras frontales
+          if (label.includes('front') || label.includes('selfie') || label.includes('user') || 
+              label.includes('facing front') || label.includes('frontal')) return false;
+          // Incluir solo cámaras traseras
           return label.includes('back') || label.includes('rear') || label.includes('trasera') || 
-                 label.includes('0') || label.includes('1') || label.includes('2');
+                 label.includes('facing back') || label.includes('environment');
         });
         
         // En Samsung S23: "camera2 0" es ultra wide, "camera2 1" es principal, "camera2 2" es telefoto
@@ -111,6 +115,7 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
           if (mainCamera) {
             selectedDeviceId = mainCamera.deviceId;
             console.log('✅ Cámara principal seleccionada:', mainCamera.label);
+            setDebugInfo(prev => prev + ` | USANDO: ${mainCamera.label}`);
           }
         }
         
@@ -370,6 +375,12 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
                   </div>
                 </div>
               </div>
+
+              {debugInfo && (
+                <div className="p-2 bg-gray-800 rounded text-xs text-green-400 font-mono overflow-x-auto">
+                  {debugInfo}
+                </div>
+              )}
 
               <div className="text-center">
                 <button
