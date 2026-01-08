@@ -335,33 +335,6 @@ const BarcodeScanner = ({ isOpen, onClose, onBarcodeDetected }) => {
                   )}
                 </div>
                 
-                <div 
-                  className="absolute inset-0 pointer-events-none z-20"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <div style={{
-                    width: '80%',
-                    height: '30%',
-                    border: '3px solid #a78bfa',
-                    borderRadius: '8px',
-                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
-                  }}>
-                    <div style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      width: '60%',
-                      height: '2px',
-                      background: 'linear-gradient(90deg, transparent, #a78bfa, transparent)',
-                      animation: 'scan 2s ease-in-out infinite'
-                    }} />
-                  </div>
-                </div>
               </div>
 
               <div className="text-center">
