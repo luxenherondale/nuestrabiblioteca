@@ -83,19 +83,15 @@ const CategorySelector = ({ selectedCategories, allCategories, onChange }) => {
   return (
     <div className="space-y-3">
       {/* Lista de checkboxes para selección múltiple */}
-      <div className="py-2 px-3 border border-gray-200 rounded-lg bg-white dark:bg-neutral-900 dark:border-neutral-700 h-36 overflow-y-scroll">
+      <div className="category-checkbox-list">
         {allCategories.map(cat => (
-          <label
-            key={cat._id}
-            className="flex items-center gap-3 py-2 px-2 hover:bg-gray-50 dark:hover:bg-neutral-800 rounded cursor-pointer"
-          >
+          <label key={cat._id} className="category-checkbox-item">
             <input
               type="checkbox"
               checked={selectedCategories.includes(cat._id)}
               onChange={() => handleToggleCategory(cat._id)}
-              className="w-4 h-4 text-violet-600 border-gray-300 rounded focus:ring-violet-500"
             />
-            <span className="text-sm text-gray-700 dark:text-neutral-400">{cat.name}</span>
+            <span>{cat.name}</span>
           </label>
         ))}
       </div>
