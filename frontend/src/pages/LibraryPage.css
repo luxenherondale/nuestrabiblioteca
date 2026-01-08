@@ -433,52 +433,7 @@
 @media (max-width: 640px) {
   .library-books-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-    padding: 0 2px;
-  }
-}
-
-/* Fix para pantallas estrechas como Samsung S23 Ultra */
-@media (max-width: 420px) {
-  .library-books-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.4rem;
-  }
-  
-  /* Categorías como scroll horizontal en móvil estrecho */
-  .library-category-filters {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 0.5rem;
-  }
-  
-  .library-category-filters::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .category-filter-btn {
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-  
-  /* Reading filters también scroll horizontal */
-  .library-reading-filters {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 0.5rem;
-  }
-  
-  .library-reading-filters::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .reading-filter-btn {
-    flex-shrink: 0;
-    white-space: nowrap;
+    gap: 0.75rem;
   }
 }
 
