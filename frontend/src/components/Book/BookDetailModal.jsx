@@ -51,7 +51,6 @@ const CategorySelector = ({ selectedCategories, allCategories, onChange }) => {
   const { addCategory, loadCategories } = useLibrary();
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
 
   const handleToggleCategory = (categoryId) => {
     if (selectedCategories.includes(categoryId)) {
@@ -83,51 +82,23 @@ const CategorySelector = ({ selectedCategories, allCategories, onChange }) => {
 
   return (
     <div className="space-y-3">
-      {/* Dropdown selector */}
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full px-4 py-3 text-left bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200/60 rounded-xl text-sm font-medium text-violet-700 hover:from-violet-100 hover:to-purple-100 hover:border-violet-300 hover:shadow-md transition-all duration-200 flex items-center justify-between backdrop-blur-sm"
-        >
-          <span className="truncate flex items-center gap-2">
-            <Tag className="w-4 h-4 text-violet-400" />
-            {selectedCategoryNames.length > 0 
-              ? `${selectedCategoryNames.length} categoría${selectedCategoryNames.length > 1 ? 's' : ''} seleccionada${selectedCategoryNames.length > 1 ? 's' : ''}`
-              : 'Seleccionar categorías...'}
-          </span>
-          <svg className={`w-5 h-5 text-violet-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        
-        {isOpen && (
-          <div className="absolute z-50 w-full mt-2 bg-white/95 backdrop-blur-md border border-violet-100 rounded-xl shadow-xl shadow-violet-500/10 max-h-56 overflow-y-auto overflow-x-hidden">
-            <div className="p-1">
-              {allCategories.map(cat => (
-                <button
-                  key={cat._id}
-                  type="button"
-                  onClick={() => handleToggleCategory(cat._id)}
-                  className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between rounded-lg transition-all duration-150 ${
-                    selectedCategories.includes(cat._id)
-                      ? 'bg-gradient-to-r from-violet-100 to-purple-100 text-violet-800 font-medium'
-                      : 'text-slate-600 hover:bg-violet-50 hover:text-violet-700'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${selectedCategories.includes(cat._id) ? 'bg-violet-500' : 'bg-slate-300'}`}></span>
-                    {cat.name}
-                  </span>
-                  {selectedCategories.includes(cat._id) && (
-                    <Check className="w-4 h-4 text-violet-500" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Select nativo multi-selección */}
+      <select
+        multiple
+        value={selectedCategories}
+        onChange={(e) => {
+          const selected = Array.from(e.target.selectedOptions, option => option.value);
+          onChange(selected);
+        }}
+        className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-violet-500 focus:ring-violet-500 bg-white dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400"
+        size={Math.min(allCategories.length, 6)}
+      >
+        {allCategories.map(cat => (
+          <option key={cat._id} value={cat._id}>
+            {cat.name}
+          </option>
+        ))}
+      </select>
       
       {/* Chips de categorías seleccionadas */}
       {selectedCategoryNames.length > 0 && (
@@ -137,13 +108,13 @@ const CategorySelector = ({ selectedCategories, allCategories, onChange }) => {
             .map(cat => (
               <span
                 key={cat._id}
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-violet-100 to-purple-100 text-violet-700 rounded-full text-xs font-medium border border-violet-200/50 shadow-sm hover:shadow transition-all duration-150"
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-violet-100 text-violet-700 rounded-full text-xs font-medium"
               >
                 {cat.name}
                 <button
                   type="button"
                   onClick={() => handleToggleCategory(cat._id)}
-                  className="hover:text-violet-900 hover:bg-violet-200 rounded-full p-0.5 transition-colors"
+                  className="hover:text-violet-900"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -159,14 +130,14 @@ const CategorySelector = ({ selectedCategories, allCategories, onChange }) => {
           value={newCategoryName}
           onChange={(e) => setNewCategoryName(e.target.value)}
           placeholder="Nueva categoría..."
-          className="input flex-1 text-sm rounded-lg border-violet-200 focus:border-violet-400 focus:ring-violet-300"
+          className="py-3 px-4 block flex-1 border-gray-200 rounded-lg text-sm focus:border-violet-500 focus:ring-violet-500 bg-white dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400"
           onKeyDown={(e) => e.key === 'Enter' && handleAddNewCategory()}
         />
         <button
           type="button"
           onClick={handleAddNewCategory}
           disabled={isAdding || !newCategoryName.trim()}
-          className="btn btn-sm bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+          className="btn btn-sm btn-primary"
         >
           <Plus className="w-4 h-4" />
         </button>
