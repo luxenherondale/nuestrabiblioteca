@@ -83,7 +83,7 @@ const CategorySelector = ({ selectedCategories, allCategories, onChange }) => {
   return (
     <div className="space-y-3">
       {/* Lista de checkboxes para selección múltiple */}
-      <div className="py-2 px-3 border border-gray-200 rounded-lg bg-white dark:bg-neutral-900 dark:border-neutral-700 max-h-48 overflow-y-auto">
+      <div className="py-2 px-3 border border-gray-200 rounded-lg bg-white dark:bg-neutral-900 dark:border-neutral-700 h-36 overflow-y-scroll">
         {allCategories.map(cat => (
           <label
             key={cat._id}
