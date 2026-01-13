@@ -32,10 +32,18 @@ const LibraryPage = () => {
   const [searchTerm, setSearchTerm] = useState(filters.search || '');
   const [readingFilter, setReadingFilter] = useState('all');
 
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    setFilters({ search: value });
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const executeSearch = () => {
+    setFilters({ search: searchTerm });
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      executeSearch();
+    }
   };
 
   const handleDeleteBook = async (bookId) => {
@@ -145,8 +153,16 @@ const LibraryPage = () => {
             type="text"
             placeholder="Buscar por título, autor..."
             value={searchTerm}
-            onChange={handleSearch}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
           />
+          <button 
+            type="button" 
+            onClick={executeSearch}
+            className="library-search-btn"
+          >
+            Buscar
+          </button>
         </div>
 
         <button

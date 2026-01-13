@@ -13,6 +13,11 @@ router.get('/public/all', async (req, res) => {
   }
 });
 
+// Función para normalizar texto (quitar tildes)
+const normalizeText = (text) => {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+};
+
 router.get('/', async (req, res) => {
   try {
     const { category, location, search } = req.query;
@@ -27,9 +32,20 @@ router.get('/', async (req, res) => {
     }
     
     if (search) {
+      // Normalizar búsqueda para ignorar tildes
+      const normalizedSearch = normalizeText(search);
+      // Crear regex que coincida con o sin tildes
+      const searchRegex = normalizedSearch.split('').map(char => {
+        const accents = {
+          'a': '[aáàäâ]', 'e': '[eéèëê]', 'i': '[iíìïî]', 
+          'o': '[oóòöô]', 'u': '[uúùüû]', 'n': '[nñ]'
+        };
+        return accents[char.toLowerCase()] || char;
+      }).join('');
+      
       query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { author: { $regex: search, $options: 'i' } }
+        { title: { $regex: searchRegex, $options: 'i' } },
+        { author: { $regex: searchRegex, $options: 'i' } }
       ];
     }
     
